@@ -1,38 +1,41 @@
-package epdc
+package epgc
 
 import (
-	"log"
-	"os"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/jinzhu/gorm"
-    _ "github.com/jinzhu/gorm/dialects/postgres"
+	"database/sql"
+	// need to sql dialect
+	_ "github.com/lib/pq"
 )
 
-// EDc struct to store *pg.DB
-type EDc struct {
-	db *pg.DB
+// Edb struct to store *DB
+type Edb struct {
+	db  *sql.DB
+	log bool
 }
 
 // InitDB initialize database
-func InitDB(dbname string, user string, password string, sslmode bool, logsql bool) (*EDc, error) {
-	e := new(EDc)
-	opt := pg.Options{
-		User:     user,
-		Password: password,
-		Database: dbname,
-		SSL:      sslmode,
+func InitDB(dbname string, user string, password string, sslmode string, logsql bool) (*Edb, error) {
+	e := new(Edb)
+	// sslmode=disable
+	opt := fmt.Sprintf("user=%s password=%s dbname=%s sslmode=%s", user, password, dbname, sslmode)
+	db, err := sql.Open("postgres", opt)
+	if err != nil {
+		return
 	}
-	if logsql == true {
-		pg.SetQueryLogger(log.New(os.Stdout, "", log.LstdFlags))
+	err = db.Ping
+	if err != nil {
+		return
 	}
 	e.db = pg.Connect(&opt)
-	err := e.createTables()
+	e.log = logsql
+	err = e.createTables()
 	return e, err
 }
 
-func (e *EDc) createTables() (err error) {
+func (e *Edb) createTables() (err error) {
 	err = e.trainingCreateTable()
 	if err != nil {
 		return

@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import "fmt"
 
@@ -11,7 +11,7 @@ type Rank struct {
 }
 
 // GetRank - get one rank dy id
-func (e *EDc) GetRank(id int64) (rank Rank, err error) {
+func (e *Edb) GetRank(id int64) (rank Rank, err error) {
 	if id == 0 {
 		return rank, nil
 	}
@@ -23,7 +23,7 @@ func (e *EDc) GetRank(id int64) (rank Rank, err error) {
 }
 
 // GetRankAll - get all rank
-func (e *EDc) GetRankAll() (ranks []Rank, err error) {
+func (e *Edb) GetRankAll() (ranks []Rank, err error) {
 	err = e.db.Model(&ranks).Order("name ASC").Select()
 	if err != nil {
 		return ranks, fmt.Errorf("GetRankAll: %s", err)
@@ -32,7 +32,7 @@ func (e *EDc) GetRankAll() (ranks []Rank, err error) {
 }
 
 // CreateRank - create new rank
-func (e *EDc) CreateRank(rank Rank) (err error) {
+func (e *Edb) CreateRank(rank Rank) (err error) {
 	err = e.db.Create(&rank)
 	if err != nil {
 		return fmt.Errorf("CreateRank: %s", err)
@@ -41,7 +41,7 @@ func (e *EDc) CreateRank(rank Rank) (err error) {
 }
 
 // UpdateRank - save rank changes
-func (e *EDc) UpdateRank(rank Rank) (err error) {
+func (e *Edb) UpdateRank(rank Rank) (err error) {
 	err = e.db.Update(&rank)
 	if err != nil {
 		return fmt.Errorf("UpdateRank: %s", err)
@@ -50,7 +50,7 @@ func (e *EDc) UpdateRank(rank Rank) (err error) {
 }
 
 // DeleteRank - delete rank by id
-func (e *EDc) DeleteRank(id int64) error {
+func (e *Edb) DeleteRank(id int64) error {
 	if id == 0 {
 		return nil
 	}
@@ -61,7 +61,7 @@ func (e *EDc) DeleteRank(id int64) error {
 	return nil
 }
 
-func (e *EDc) rankCreateTable() (err error) {
+func (e *Edb) rankCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS ranks (id bigserial primary key, name text, note text)`
 	_, err = e.db.Exec(str)
 	if err != nil {

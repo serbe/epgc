@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import (
 	"fmt"
@@ -21,7 +21,7 @@ type Practice struct {
 }
 
 // GetPractice - get one practice by id
-func (e *EDc) GetPractice(id int64) (practice Practice, err error) {
+func (e *Edb) GetPractice(id int64) (practice Practice, err error) {
 	if id == 0 {
 		return
 	}
@@ -34,7 +34,7 @@ func (e *EDc) GetPractice(id int64) (practice Practice, err error) {
 }
 
 // GetPracticeAll - get all practices
-func (e *EDc) GetPracticeAll() (practices []Practice, err error) {
+func (e *Edb) GetPracticeAll() (practices []Practice, err error) {
 	err = e.db.Model(&practices).Order("date_of_practice ASC").Select()
 	if err != nil {
 		log.Println("GetPracticeAll: ", err)
@@ -49,7 +49,7 @@ func (e *EDc) GetPracticeAll() (practices []Practice, err error) {
 }
 
 // GetCompanyPractices - get all practices by company id
-func (e *EDc) GetCompanyPractices(id int64) (practices []Practice, err error) {
+func (e *Edb) GetCompanyPractices(id int64) (practices []Practice, err error) {
 	if id == 0 {
 		return
 	}
@@ -62,7 +62,7 @@ func (e *EDc) GetCompanyPractices(id int64) (practices []Practice, err error) {
 }
 
 // CreatePractice - create new practice
-func (e *EDc) CreatePractice(practice Practice) (err error) {
+func (e *Edb) CreatePractice(practice Practice) (err error) {
 	err = e.db.Create(&practice)
 	if err != nil {
 		log.Println("CreatePractice: ", err)
@@ -72,7 +72,7 @@ func (e *EDc) CreatePractice(practice Practice) (err error) {
 }
 
 // UpdatePractice - save practice changes
-func (e *EDc) UpdatePractice(practice Practice) (err error) {
+func (e *Edb) UpdatePractice(practice Practice) (err error) {
 	err = e.db.Update(&practice)
 	if err != nil {
 		log.Println("UpdatePractice e.db.Update: ", err)
@@ -82,7 +82,7 @@ func (e *EDc) UpdatePractice(practice Practice) (err error) {
 }
 
 // DeletePractice - delete practice by id
-func (e *EDc) DeletePractice(id int64) (err error) {
+func (e *Edb) DeletePractice(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -94,7 +94,7 @@ func (e *EDc) DeletePractice(id int64) (err error) {
 	return
 }
 
-func (e *EDc) practiceCreateTable() (err error) {
+func (e *Edb) practiceCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS practices (id bigserial primary key, company_id bigint, kind_id bigint, topic text, date_of_practice date, note text)`
 	_, err = e.db.Exec(str)
 	if err != nil {

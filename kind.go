@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import "log"
 
@@ -11,7 +11,7 @@ type Kind struct {
 }
 
 // GetKind - get one kind by id
-func (e *EDc) GetKind(id int64) (kind Kind, err error) {
+func (e *Edb) GetKind(id int64) (kind Kind, err error) {
 	if id == 0 {
 		return
 	}
@@ -23,7 +23,7 @@ func (e *EDc) GetKind(id int64) (kind Kind, err error) {
 }
 
 // GetKindAll - get all kinds
-func (e *EDc) GetKindAll() (kinds []Kind, err error) {
+func (e *Edb) GetKindAll() (kinds []Kind, err error) {
 	err = e.db.Model(&kinds).Order("name ASC").Select()
 	if err != nil {
 		log.Println("GetKindAll ", err)
@@ -33,7 +33,7 @@ func (e *EDc) GetKindAll() (kinds []Kind, err error) {
 }
 
 // CreateKind - create new kind
-func (e *EDc) CreateKind(kind Kind) (err error) {
+func (e *Edb) CreateKind(kind Kind) (err error) {
 	err = e.db.Create(&kind)
 	if err != nil {
 		log.Println("CreateKind ", err)
@@ -42,7 +42,7 @@ func (e *EDc) CreateKind(kind Kind) (err error) {
 }
 
 // UpdateKind - save kind changes
-func (e *EDc) UpdateKind(kind Kind) (err error) {
+func (e *Edb) UpdateKind(kind Kind) (err error) {
 	err = e.db.Update(&kind)
 	if err != nil {
 		log.Println("UpdateKind ", err)
@@ -51,7 +51,7 @@ func (e *EDc) UpdateKind(kind Kind) (err error) {
 }
 
 // DeleteKind - delete kind by id
-func (e *EDc) DeleteKind(id int64) (err error) {
+func (e *Edb) DeleteKind(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -62,7 +62,7 @@ func (e *EDc) DeleteKind(id int64) (err error) {
 	return
 }
 
-func (e *EDc) kindCreateTable() (err error) {
+func (e *Edb) kindCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS kinds (id bigserial primary key, name text, note text)`
 	_, err = e.db.Exec(str)
 	if err != nil {

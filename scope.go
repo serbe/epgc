@@ -1,17 +1,23 @@
-package epdc
+package epgc
 
-import "log"
+import (
+	"database/sql"
+	"log"
+)
 
 // Scope - struct for scope
 type Scope struct {
-	TableName struct{} `sql:"scopes"`
-	ID        int64    `sql:"id" json:"id"`
-	Name      string   `sql:"name" json:"name"`
-	Note      string   `sql:"note, null" json:"note"`
+	ID   int64  `sql:"id" json:"id"`
+	Name string `sql:"name" json:"name"`
+	Note string `sql:"note, null" json:"note"`
+}
+
+func scanScope(row *sql.Row) (scope Scope, err error) {
+
 }
 
 // GetScope - get one scope by id
-func (e *EDc) GetScope(id int64) (scope Scope, err error) {
+func (e *Edb) GetScope(id int64) (scope Scope, err error) {
 	if id == 0 {
 		return
 	}
@@ -23,7 +29,7 @@ func (e *EDc) GetScope(id int64) (scope Scope, err error) {
 }
 
 // GetScopeAll - get all scope
-func (e *EDc) GetScopeAll() (scopes []Scope, err error) {
+func (e *Edb) GetScopeAll() (scopes []Scope, err error) {
 	err = e.db.Model(&scopes).Order("name ASC").Select()
 	if err != nil {
 		log.Println("GetScopeAll ", err)
@@ -33,8 +39,8 @@ func (e *EDc) GetScopeAll() (scopes []Scope, err error) {
 }
 
 // CreateScope - create new scope
-func (e *EDc) CreateScope(scope Scope) (err error) {
-	err = e.db.Create(&scope)
+func (e *Edb) CreateScope(s Scope) (id int64, err error) {
+	err = db.QueryRow(`INSERT INTO scopes(name, note) VALUES($1, $2) RETURNING id`, qs(s.Name), qs(s.Note)).Scan(&id)
 	if err != nil {
 		log.Println("CreateScope ", err)
 	}
@@ -42,7 +48,7 @@ func (e *EDc) CreateScope(scope Scope) (err error) {
 }
 
 // UpdateScope - save scope changes
-func (e *EDc) UpdateScope(scope Scope) (err error) {
+func (e *Edb) UpdateScope(scope Scope) (err error) {
 	err = e.db.Update(&scope)
 	if err != nil {
 		log.Println("UpdateScope ", err)
@@ -51,7 +57,7 @@ func (e *EDc) UpdateScope(scope Scope) (err error) {
 }
 
 // DeleteScope - delete scope by id
-func (e *EDc) DeleteScope(id int64) (err error) {
+func (e *Edb) DeleteScope(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -62,7 +68,7 @@ func (e *EDc) DeleteScope(id int64) (err error) {
 	return
 }
 
-func (e *EDc) scopeCreateTable() (err error) {
+func (e *Edb) scopeCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS scopes (id bigserial primary key, name text, note text)`
 	_, err = e.db.Exec(str)
 	if err != nil {

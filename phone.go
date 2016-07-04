@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import "log"
 
@@ -14,7 +14,7 @@ type Phone struct {
 }
 
 // CreatePhone - create new phone
-func (e *EDc) CreatePhone(phone Phone, fax bool) (err error) {
+func (e *Edb) CreatePhone(phone Phone, fax bool) (err error) {
 	phone.Fax = fax
 	err = e.db.Create(&phone)
 	if err != nil {
@@ -24,7 +24,7 @@ func (e *EDc) CreatePhone(phone Phone, fax bool) (err error) {
 }
 
 // GetCompanyPhones - get all phones by company id
-func (e *EDc) GetCompanyPhones(id int64) (phones []Phone, err error) {
+func (e *Edb) GetCompanyPhones(id int64) (phones []Phone, err error) {
 	if id == 0 {
 		return
 	}
@@ -36,7 +36,7 @@ func (e *EDc) GetCompanyPhones(id int64) (phones []Phone, err error) {
 }
 
 // GetCompanyFaxes - get all faxes by company id
-func (e *EDc) GetCompanyFaxes(id int64) (phones []Phone, err error) {
+func (e *Edb) GetCompanyFaxes(id int64) (phones []Phone, err error) {
 	if id == 0 {
 		return
 	}
@@ -48,7 +48,7 @@ func (e *EDc) GetCompanyFaxes(id int64) (phones []Phone, err error) {
 }
 
 // GetCompanyPhonesAndFaxes - get all faxes or phones by company id and isfax
-func (e *EDc) GetCompanyPhonesAndFaxes(id int64, fax bool) (phones []Phone, err error) {
+func (e *Edb) GetCompanyPhonesAndFaxes(id int64, fax bool) (phones []Phone, err error) {
 	if id == 0 {
 		return
 	}
@@ -61,7 +61,7 @@ func (e *EDc) GetCompanyPhonesAndFaxes(id int64, fax bool) (phones []Phone, err 
 }
 
 // CreateCompanyPhones - create new phones to company
-func (e *EDc) CreateCompanyPhones(company Company) (err error) {
+func (e *Edb) CreateCompanyPhones(company Company) (err error) {
 	err = e.CleanCompanyPhones(company)
 	if err != nil {
 		log.Println("CreateCompanyPhones CleanCompanyPhones ", err)
@@ -83,7 +83,7 @@ func (e *EDc) CreateCompanyPhones(company Company) (err error) {
 }
 
 // CreateCompanyFaxes - create new faxes to company
-func (e *EDc) CreateCompanyFaxes(company Company) (err error) {
+func (e *Edb) CreateCompanyFaxes(company Company) (err error) {
 	err = e.CleanCompanyFaxes(company)
 	if err != nil {
 		log.Println("CreateCompanyFaxes CleanCompanyFaxes ", err)
@@ -105,7 +105,7 @@ func (e *EDc) CreateCompanyFaxes(company Company) (err error) {
 }
 
 // CleanCompanyPhones - delete all unnecessary phones by company id
-func (e *EDc) CleanCompanyPhones(company Company) (err error) {
+func (e *Edb) CleanCompanyPhones(company Company) (err error) {
 	phones := []int64{}
 	for _, value := range company.Phones {
 		phones = append(phones, value.Phone)
@@ -137,7 +137,7 @@ func (e *EDc) CleanCompanyPhones(company Company) (err error) {
 }
 
 // CleanCompanyFaxes - delete all unnecessary faxes by company id
-func (e *EDc) CleanCompanyFaxes(company Company) (err error) {
+func (e *Edb) CleanCompanyFaxes(company Company) (err error) {
 	phones := []int64{}
 	for _, value := range company.Faxes {
 		phones = append(phones, value.Phone)
@@ -169,7 +169,7 @@ func (e *EDc) CleanCompanyFaxes(company Company) (err error) {
 }
 
 // DeleteAllCompanyPhones - delete all phones and faxes by company id
-func (e *EDc) DeleteAllCompanyPhones(id int64) (err error) {
+func (e *Edb) DeleteAllCompanyPhones(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -181,7 +181,7 @@ func (e *EDc) DeleteAllCompanyPhones(id int64) (err error) {
 }
 
 // GetPeoplePhones - get all phones by people id
-func (e *EDc) GetPeoplePhones(id int64) (phones []Phone, err error) {
+func (e *Edb) GetPeoplePhones(id int64) (phones []Phone, err error) {
 	if id == 0 {
 		return
 	}
@@ -193,7 +193,7 @@ func (e *EDc) GetPeoplePhones(id int64) (phones []Phone, err error) {
 }
 
 // GetPeopleFaxes - get all faxes by people id
-func (e *EDc) GetPeopleFaxes(id int64) (phones []Phone, err error) {
+func (e *Edb) GetPeopleFaxes(id int64) (phones []Phone, err error) {
 	if id == 0 {
 		return
 	}
@@ -205,7 +205,7 @@ func (e *EDc) GetPeopleFaxes(id int64) (phones []Phone, err error) {
 }
 
 // GetPeoplePhonesAndFaxes - get all phones and faxes by people id
-func (e *EDc) GetPeoplePhonesAndFaxes(id int64, fax bool) (phones []Phone, err error) {
+func (e *Edb) GetPeoplePhonesAndFaxes(id int64, fax bool) (phones []Phone, err error) {
 	if id == 0 {
 		return
 	}
@@ -218,7 +218,7 @@ func (e *EDc) GetPeoplePhonesAndFaxes(id int64, fax bool) (phones []Phone, err e
 }
 
 // CreatePeoplePhones - create new phones to people
-func (e *EDc) CreatePeoplePhones(people People) (err error) {
+func (e *Edb) CreatePeoplePhones(people People) (err error) {
 	err = e.CleanPeoplePhones(people)
 	if err != nil {
 		log.Println("CreatePeoplePhones CleanPeoplePhones ", err)
@@ -240,7 +240,7 @@ func (e *EDc) CreatePeoplePhones(people People) (err error) {
 }
 
 // CreatePeopleFaxes - create new faxes to people
-func (e *EDc) CreatePeopleFaxes(people People) (err error) {
+func (e *Edb) CreatePeopleFaxes(people People) (err error) {
 	err = e.CleanPeopleFaxes(people)
 	if err != nil {
 		log.Println("CreatePeopleFaxes CleanPeopleFaxes ", err)
@@ -262,7 +262,7 @@ func (e *EDc) CreatePeopleFaxes(people People) (err error) {
 }
 
 // CleanPeoplePhones - delete all unnecessary phones by people id
-func (e *EDc) CleanPeoplePhones(people People) (err error) {
+func (e *Edb) CleanPeoplePhones(people People) (err error) {
 	phones := []int64{}
 	for _, value := range people.Phones {
 		phones = append(phones, value.Phone)
@@ -294,7 +294,7 @@ func (e *EDc) CleanPeoplePhones(people People) (err error) {
 }
 
 // CleanPeopleFaxes - delete all unnecessary faxes by people id
-func (e *EDc) CleanPeopleFaxes(people People) (err error) {
+func (e *Edb) CleanPeopleFaxes(people People) (err error) {
 	phones := []int64{}
 	for _, value := range people.Faxes {
 		phones = append(phones, value.Phone)
@@ -326,7 +326,7 @@ func (e *EDc) CleanPeopleFaxes(people People) (err error) {
 }
 
 // DeleteAllPeoplePhones - delete all phones and faxes by people id
-func (e *EDc) DeleteAllPeoplePhones(id int64) (err error) {
+func (e *Edb) DeleteAllPeoplePhones(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -337,7 +337,7 @@ func (e *EDc) DeleteAllPeoplePhones(id int64) (err error) {
 	return
 }
 
-func (e *EDc) phoneCreateTable() (err error) {
+func (e *Edb) phoneCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS phones (id bigserial primary key, people_id bigint, company_id bigint, phone bigint, fax bool NOT NULL DEFAULT false, note text)`
 	_, err = e.db.Exec(str)
 	if err != nil {

@@ -1,2 +1,2 @@
-# edc
+# epgc
 EDDS postgresql database client

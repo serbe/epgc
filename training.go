@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import (
 	"log"
@@ -17,7 +17,7 @@ type Training struct {
 }
 
 // GetTraining - get training by id
-func (e *EDc) GetTraining(id int64) (training Training, err error) {
+func (e *Edb) GetTraining(id int64) (training Training, err error) {
 	if id == 0 {
 		return
 	}
@@ -29,7 +29,7 @@ func (e *EDc) GetTraining(id int64) (training Training, err error) {
 }
 
 // GetTrainingAll - get all training
-func (e *EDc) GetTrainingAll() (trainings []Training, err error) {
+func (e *Edb) GetTrainingAll() (trainings []Training, err error) {
 	err = e.db.Model(&trainings).Order("start_date ASC").Select()
 	if err != nil {
 		log.Println("GetTrainingAll ", err)
@@ -43,7 +43,7 @@ func (e *EDc) GetTrainingAll() (trainings []Training, err error) {
 }
 
 // CreateTraining - create new training
-func (e *EDc) CreateTraining(training Training) (err error) {
+func (e *Edb) CreateTraining(training Training) (err error) {
 	err = e.db.Create(&training)
 	if err != nil {
 		log.Println("CreateTraining ", err)
@@ -52,7 +52,7 @@ func (e *EDc) CreateTraining(training Training) (err error) {
 }
 
 // UpdateTraining - save changes to training
-func (e *EDc) UpdateTraining(training Training) (err error) {
+func (e *Edb) UpdateTraining(training Training) (err error) {
 	err = e.db.Update(&training)
 	if err != nil {
 		log.Println("UpdateTraining ", err)
@@ -61,7 +61,7 @@ func (e *EDc) UpdateTraining(training Training) (err error) {
 }
 
 // DeleteTraining - delete training by id
-func (e *EDc) DeleteTraining(id int64) (err error) {
+func (e *Edb) DeleteTraining(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -72,7 +72,7 @@ func (e *EDc) DeleteTraining(id int64) (err error) {
 	return
 }
 
-func (e *EDc) trainingCreateTable() (err error) {
+func (e *Edb) trainingCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS trainings (id bigserial primary key, start_date date, end_date date, note text)`
 	_, err = e.db.Exec(str)
 	if err != nil {

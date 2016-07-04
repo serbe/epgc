@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import "fmt"
 
@@ -12,7 +12,7 @@ type Post struct {
 }
 
 // GetPost - get one post dy id
-func (e *EDc) GetPost(id int64) (post Post, err error) {
+func (e *Edb) GetPost(id int64) (post Post, err error) {
 	if id == 0 {
 		return post, nil
 	}
@@ -24,7 +24,7 @@ func (e *EDc) GetPost(id int64) (post Post, err error) {
 }
 
 // GetPostAll - get all post
-func (e *EDc) GetPostAll() (posts []Post, err error) {
+func (e *Edb) GetPostAll() (posts []Post, err error) {
 	err = e.db.Model(&posts).Order("name ASC").Select()
 	if err != nil {
 		return posts, fmt.Errorf("GetPostAll: %s", err)
@@ -33,7 +33,7 @@ func (e *EDc) GetPostAll() (posts []Post, err error) {
 }
 
 // GetPostNoGOAll - get all post with no go
-func (e *EDc) GetPostNoGOAll() (posts []Post, err error) {
+func (e *Edb) GetPostNoGOAll() (posts []Post, err error) {
 	_, err = e.db.Query(&posts, "SELECT * FROM posts WHERE go = ?", false)
 	if err != nil {
 		return posts, fmt.Errorf("GetPostNoGOAll: %s", err)
@@ -42,7 +42,7 @@ func (e *EDc) GetPostNoGOAll() (posts []Post, err error) {
 }
 
 // GetPostGOAll - get all post with go
-func (e *EDc) GetPostGOAll() (posts []Post, err error) {
+func (e *Edb) GetPostGOAll() (posts []Post, err error) {
 	_, err = e.db.Query(&posts, "SELECT * FROM posts WHERE go = ?", true)
 	if err != nil {
 		return posts, fmt.Errorf("GetPostGOAll: %s", err)
@@ -51,7 +51,7 @@ func (e *EDc) GetPostGOAll() (posts []Post, err error) {
 }
 
 // CreatePost - create new post
-func (e *EDc) CreatePost(post Post) (err error) {
+func (e *Edb) CreatePost(post Post) (err error) {
 	err = e.db.Create(&post)
 	if err != nil {
 		return fmt.Errorf("CreatePost: %s", err)
@@ -60,7 +60,7 @@ func (e *EDc) CreatePost(post Post) (err error) {
 }
 
 // UpdatePost - save post changes
-func (e *EDc) UpdatePost(post Post) (err error) {
+func (e *Edb) UpdatePost(post Post) (err error) {
 	err = e.db.Update(&post)
 	if err != nil {
 		return fmt.Errorf("UpdatePost: %s", err)
@@ -69,7 +69,7 @@ func (e *EDc) UpdatePost(post Post) (err error) {
 }
 
 // DeletePost - delete post by id
-func (e *EDc) DeletePost(id int64) error {
+func (e *Edb) DeletePost(id int64) error {
 	if id == 0 {
 		return nil
 	}
@@ -80,7 +80,7 @@ func (e *EDc) DeletePost(id int64) error {
 	return nil
 }
 
-func (e *EDc) postCreateTable() (err error) {
+func (e *Edb) postCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS posts (id BIGSERIAL PRIMARY KEY, name TEXT, go BOOL NOT NULL DEFAULT FALSE, note TEXT, UNIQUE (name, go))`
 	_, err = e.db.Exec(str)
 	if err != nil {

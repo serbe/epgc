@@ -1,4 +1,4 @@
-package epdc
+package epgc
 
 import (
 	"log"
@@ -20,7 +20,7 @@ type Company struct {
 }
 
 // GetCompany - get one company by id
-func (e *EDc) GetCompany(id int64) (company Company, err error) {
+func (e *Edb) GetCompany(id int64) (company Company, err error) {
 	if id == 0 {
 		return
 	}
@@ -38,7 +38,7 @@ func (e *EDc) GetCompany(id int64) (company Company, err error) {
 }
 
 // GetCompanyAll - get all companyes
-func (e *EDc) GetCompanyAll() (companyes []Company, err error) {
+func (e *Edb) GetCompanyAll() (companyes []Company, err error) {
 	err = e.db.Model(&companyes).Order("name ASC").Select()
 	if err != nil {
 		log.Println("GetCompanyAll Select ", err)
@@ -58,7 +58,7 @@ func (e *EDc) GetCompanyAll() (companyes []Company, err error) {
 }
 
 // CreateCompany - create new company
-func (e *EDc) CreateCompany(company Company) (err error) {
+func (e *Edb) CreateCompany(company Company) (err error) {
 	err = e.db.Create(&company)
 	if err != nil {
 		log.Println("CreateCompany e.db.Create ", err)
@@ -71,7 +71,7 @@ func (e *EDc) CreateCompany(company Company) (err error) {
 }
 
 // UpdateCompany - save company changes
-func (e *EDc) UpdateCompany(company Company) (err error) {
+func (e *Edb) UpdateCompany(company Company) (err error) {
 	err = e.db.Update(&company)
 	if err != nil {
 		log.Println("UpdateCompany e.db.Update ", err)
@@ -85,7 +85,7 @@ func (e *EDc) UpdateCompany(company Company) (err error) {
 }
 
 // DeleteCompany - delete company by id
-func (e *EDc) DeleteCompany(id int64) (err error) {
+func (e *Edb) DeleteCompany(id int64) (err error) {
 	if id == 0 {
 		return
 	}
@@ -97,7 +97,7 @@ func (e *EDc) DeleteCompany(id int64) (err error) {
 	return
 }
 
-func (e *EDc) companyCreateTable() (err error) {
+func (e *Edb) companyCreateTable() (err error) {
 	str := `CREATE TABLE IF NOT EXISTS companies (id BIGSERIAL PRIMARY KEY, name TEXT, address TEXT, scope_id BIGINT, note TEXT, UNIQUE(name, scope_id))`
 	_, err = e.db.Exec(str)
 	if err != nil {
