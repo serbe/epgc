@@ -24,7 +24,7 @@ func (e *Edb) GetCompany(id int64) (company Company, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&company).Where("id = ?", id).Select()
+	row, err = e.db.Query("SELECT &company).Where("id = ?", id).Select()
 	if err != nil {
 		log.Println("GetCompany Select ", err)
 		return

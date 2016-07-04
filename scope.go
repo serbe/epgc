@@ -21,7 +21,8 @@ func (e *Edb) GetScope(id int64) (scope Scope, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&scope).Where("id = ?", id).Select()
+	row := e.db.QueryRow("SELECT id,name,note FROM scopes WHERE id = $1", id)
+	scope, err = scanScope(row)
 	if err != nil {
 		log.Println("GetScope ", err)
 	}
