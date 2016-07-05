@@ -29,8 +29,18 @@ func (e *Edb) GetScope(id int64) (scope Scope, err error) {
 	return
 }
 
-// GetScopeAll - get all scope
-func (e *Edb) GetScopeAll() (scopes []Scope, err error) {
+// GetScopeList - get all scope for list
+func (e *Edb) GetScopeList() (scopes []Scope, err error) {
+	err = e.db.Model(&scopes).Order("name ASC").Select()
+	if err != nil {
+		log.Println("GetScopeAll ", err)
+		return
+	}
+	return
+}
+
+// GetScopeSelect - get all scope for select
+func (e *Edb) GetScopeSelect() (scopes []Scope, err error) {
 	err = e.db.Model(&scopes).Order("name ASC").Select()
 	if err != nil {
 		log.Println("GetScopeAll ", err)
