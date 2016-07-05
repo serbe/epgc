@@ -33,46 +33,46 @@ func InitDB(dbname string, user string, password string, sslmode string, logsql 
 	return e, err
 }
 
-func (e *Edb) createTables() (err error) {
-	err = e.trainingCreateTable()
+func (e *Edb) createTables() error {
+	err := e.trainingCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.kindCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.emailCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.companyCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.peopleCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.postCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.rankCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.scopeCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.phoneCreateTable()
 	if err != nil {
-		return
+		return err
 	}
 	err = e.practiceCreateTable()
 	if err != nil {
-		return
+		return err
 	}
-	return
+	return nil
 }

@@ -29,7 +29,7 @@ type People struct {
 	Trainings []Training `sql:"-"`
 }
 
-func scanPeople(row *sql.Row) (people People, err error) {
+func scanPeople(row *sql.Row) (People, error) {
 	var (
 		pid        sql.NullInt64
 		pname      sql.NullString
@@ -43,11 +43,12 @@ func scanPeople(row *sql.Row) (people People, err error) {
 		pphones    sql.NullString
 		pfaxes     sql.NullString
 		// strainings sql.NullString
+		people People
 	)
-	err = row.Scan(&pid, &pname, &pcompanyID, &ppostID, &ppostGOID, &prankID, &pnote, &pemails, &pphones, &pfaxes)
+	err := row.Scan(&pid, &pname, &pcompanyID, &ppostID, &ppostGOID, &prankID, &pnote, &pemails, &pphones, &pfaxes)
 	if err != nil {
 		log.Println("scanPeople row.Scan ", err)
-		return
+		return People{}, err
 	}
 	people.ID = n2i(pid)
 	people.Name = n2s(pname)
@@ -60,13 +61,13 @@ func scanPeople(row *sql.Row) (people People, err error) {
 	people.Phones = n2phones(pphones)
 	people.Faxes = n2faxes(pfaxes)
 	// people.Practices = n2practices(spractices)
-	return
+	return people, nil
 }
 
 // GetPeople - get one people by id
-func (e *Edb) GetPeople(id int64) (people People, err error) {
+func (e *Edb) GetPeople(id int64) (People, error) {
 	if id == 0 {
-		return
+		return People{}, nil
 	}
 	stmt, err := e.db.Prepare(`SELECT
 		p.id,
@@ -89,16 +90,16 @@ func (e *Edb) GetPeople(id int64) (people People, err error) {
 	WHERE id = $1`)
 	if err != nil {
 		log.Println("GetPeople e.db.Prepare ", err)
-		return
+		return People{}, err
 	}
 	row := stmt.QueryRow(id)
 	people, err = scanPeople(row)
 	// people.Trainings = GetPeopleTrainings(people.ID)
-	return
+	return people, err
 }
 
 // GetPeopleList - get all peoples for list
-func (e *Edb) GetPeopleList() (peoples []People, err error) {
+func (e *Edb) GetPeopleList() ([]People, error) {
 	rows, err = e.db.Query(&peoples).Order("name ASC").Select()
 	if err != nil {
 		log.Println("GetPeopleAll ", err)
@@ -123,51 +124,51 @@ func (e *Edb) CreatePeople(people People) (err error) {
 	err = e.db.Create(&people)
 	if err != nil {
 		log.Println("CreatePeople ", err)
-		return
+		return err
 	}
 	_ = e.CreatePeopleEmails(people)
 	_ = e.CreatePeoplePhones(people)
 	_ = e.CreatePeopleFaxes(people)
 	// CreatePeopleTrainings(people)
-	return
+	return err
 }
 
 // UpdatePeople - save people changes
-func (e *Edb) UpdatePeople(people People) (err error) {
+func (e *Edb) UpdatePeople(people People) error {
 	err = e.db.Update(&people)
 	if err != nil {
 		log.Println("UpdatePeople ", err)
-		return
+		return err
 	}
 	_ = e.CreatePeopleEmails(people)
 	_ = e.CreatePeoplePhones(people)
 	_ = e.CreatePeopleFaxes(people)
 	// CreatePeopleTrainings(people)
-	return
+	return err
 }
 
 // DeletePeople - delete people by id
-func (e *Edb) DeletePeople(id int64) (err error) {
+func (e *Edb) DeletePeople(id int64) error {
 	if id == 0 {
-		return
+		return nil
 	}
-	err = e.DeleteAllPeoplePhones(id)
+	err := e.DeleteAllPeoplePhones(id)
 	if err != nil {
 		log.Println("DeletePeople DeleteAllPeoplePhones ", err)
-		return
+		return err
 	}
 	e.db.Exec("DELETE FROM peoples WHERE id = $1", id)
 	if err != nil {
 		log.Println("DeletePeople ", err)
 	}
-	return
+	return err
 }
 
-func (e *Edb) peopleCreateTable() (err error) {
+func (e *Edb) peopleCreateTable() error {
 	str := `CREATE TABLE IF NOT EXISTS peoples (id bigserial primary key, name text, company_id bigint, post_id bigint, post_go_id bigint, rank_id bigint, birthday date, note text)`
-	_, err = e.db.Exec(str)
+	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("peopleCreateTable ", err)
 	}
-	return
+	return err
 }

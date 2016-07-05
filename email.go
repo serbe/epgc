@@ -75,17 +75,16 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 
 // GetEmail - get one email by id
 func (e *Edb) GetEmail(id int64) (Email, error) {
-	var email Email
 	if id == 0 {
-		return email, nil
+		return Email{}, nil
 	}
 	stmt, err := e.db.Prepare(" SELECT id,company_id,people_id,email FROM emails WHERE id = $1")
 	if err != nil {
 		log.Println("GetEmail e.db.Prepare", err)
-		return email, err
+		return Email{}, err
 	}
 	row := stmt.QueryRow(id)
-	email, err = scanEmail(row)
+	email, err := scanEmail(row)
 	return email, nil
 }
 
@@ -94,145 +93,146 @@ func (e *Edb) GetEmailList() ([]Email, error) {
 	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC")
 	if err != nil {
 		log.Println("GetEmailList e.db.Query ", err)
-		return
+		return []Email{}, err
 	}
-	emails, err = scanEmails(rows, "list")
-	return
+	emails, err := scanEmails(rows, "list")
+	return emails, err
 }
 
 // GetCompanyEmails - get all emails by company id
-func (e *Edb) GetCompanyEmails(id int64) (emails []Email, err error) {
+func (e *Edb) GetCompanyEmails(id int64) ([]Email, error) {
 	if id == 0 {
-		return
+		return []Email{}, nil
 	}
 	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC WHERE company_id = $1", id)
 	if err != nil {
 		log.Println("GetCompanyEmails e.db.Query ", err)
-		return
+		return []Email{}, err
 	}
-	emails, err = scanEmails(rows, "list")
-	return
+	emails, err := scanEmails(rows, "list")
+	return emails, err
 }
 
 // GetPeopleEmails - get all emails by people id
-func (e *Edb) GetPeopleEmails(id int64) (emails []Email, err error) {
+func (e *Edb) GetPeopleEmails(id int64) ([]Email, error) {
 	if id == 0 {
-		return
+		return []Email{}, nil
 	}
 	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC WHERE people_id = $1", id)
 	if err != nil {
 		log.Println("GetPeopleEmails e.db.Query ", err)
-		return
+		return []Email{}, err
 	}
-	emails, err = scanEmails(rows, "list")
-	return
+	emails, err := scanEmails(rows, "list")
+	return emails, err
 }
 
 // CreateEmail - create new email
-func (e *Edb) CreateEmail(email Email) (err error) {
+func (e *Edb) CreateEmail(email Email) (int64, error) {
 	stmt, err := e.db.Prepare(`INSERT INTO emails(company_id, people_id, email) VALUES($1, $2, $3) RETURNING id`)
 	if err != nil {
 		log.Println("CreateEmail e.db.Prepare ", err)
-		return
+		return 0, err
 	}
 	err = stmt.QueryRow(i2n(email.CompanyID), i2n(email.PeopleID), s2n(email.Email)).Scan(&email.ID)
 	if err != nil {
 		log.Println("CreateEmail db.QueryRow ", err)
+		return 0, err
 	}
-	return
+	return email.ID, nil
 }
 
 // CreateCompanyEmails - create new company email
-func (e *Edb) CreateCompanyEmails(company Company) (err error) {
-	err = e.DeleteCompanyEmails(company.ID)
+func (e *Edb) CreateCompanyEmails(company Company) error {
+	err := e.DeleteCompanyEmails(company.ID)
 	if err != nil {
 		log.Println("CreateCompanyEmails DeleteCompanyEmails ", err)
-		return
+		return err
 	}
 	for _, email := range company.Emails {
 		email.CompanyID = company.ID
-		err = e.CreateEmail(email)
+		_, err = e.CreateEmail(email)
 		if err != nil {
 			log.Println("CreateCompanyEmails CreateEmail ", err)
-			return
+			return err
 		}
 	}
-	return
+	return nil
 }
 
 // CreatePeopleEmails - create new people email
-func (e *Edb) CreatePeopleEmails(people People) (err error) {
-	err = e.DeletePeopleEmails(people.ID)
+func (e *Edb) CreatePeopleEmails(people People) error {
+	err := e.DeletePeopleEmails(people.ID)
 	if err != nil {
 		log.Println("CreatePeopleEmails DeletePeopleEmails ", err)
-		return
+		return err
 	}
 	for _, email := range people.Emails {
 		email.PeopleID = people.ID
 		err = e.CreateEmail(email)
 		if err != nil {
 			log.Println("CreatePeopleEmails CreateEmail ", err)
-			return
+			return err
 		}
 	}
-	return
+	return nil
 }
 
 // UpdateEmail - save email changes
-func (e *Edb) UpdateEmail(email Email) (err error) {
+func (e *Edb) UpdateEmail(email Email) error {
 	stmt, err := e.db.Prepare(`UPDATE emails SET company_id=$2,people_id=$3,email=$4 WHERE id=$1`)
 	if err != nil {
 		log.Println("UpdateEmail e.db.Prepare ", err)
-		return
+		return err
 	}
 	_, err = stmt.Exec(i2n(email.ID), i2n(email.CompanyID), i2n(email.PeopleID), s2n(email.Email))
 	if err != nil {
 		log.Println("UpdateEmail stmt.Exec ", err)
 	}
-	return
+	return err
 }
 
 // DeleteEmail - delete email by id
-func (e *Edb) DeleteEmail(id int64) (err error) {
+func (e *Edb) DeleteEmail(id int64) error {
 	if id == 0 {
-		return
+		return nil
 	}
-	_, err = e.db.Exec("DELETE FROM emails WHERE id = $1", id)
+	_, err := e.db.Exec("DELETE FROM emails WHERE id = $1", id)
 	if err != nil {
 		log.Println("DeleteEmail ", err)
 	}
-	return
+	return err
 }
 
 // DeleteCompanyEmails - delete all emails by company id
-func (e *Edb) DeleteCompanyEmails(id int64) (err error) {
+func (e *Edb) DeleteCompanyEmails(id int64) error {
 	if id == 0 {
-		return
+		return nil
 	}
-	_, err = e.db.Exec("DELETE FROM emails WHERE company_id = $1", id)
+	_, err := e.db.Exec("DELETE FROM emails WHERE company_id = $1", id)
 	if err != nil {
 		log.Println("DeleteCompanyEmails ", err)
 	}
-	return
+	return err
 }
 
 // DeletePeopleEmails - delete all emails by people id
-func (e *Edb) DeletePeopleEmails(id int64) (err error) {
+func (e *Edb) DeletePeopleEmails(id int64) error {
 	if id == 0 {
-		return
+		return nil
 	}
-	_, err = e.db.Exec("DELETE FROM emails WHERE people_id = $1", id)
+	_, err := e.db.Exec("DELETE FROM emails WHERE people_id = $1", id)
 	if err != nil {
 		log.Println("DeletePeopleEmails ", err)
 	}
-	return
+	return err
 }
 
-func (e *Edb) emailCreateTable() (err error) {
+func (e *Edb) emailCreateTable() error {
 	str := `CREATE TABLE IF NOT EXISTS emails (id bigserial primary key, company_id bigint, people_id bigint, email text)`
-	_, err = e.db.Exec(str)
+	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("emailCreateTable ", err)
 	}
-	return
+	return err
 }

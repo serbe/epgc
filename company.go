@@ -103,9 +103,8 @@ func scanCompanies(rows *sql.Rows, opt string) ([]Company, error) {
 
 // GetCompany - get one company by id
 func (e *Edb) GetCompany(id int64) (Company, error) {
-	var company Company
 	if id == 0 {
-		return company, nil
+		return Company{}, nil
 	}
 	stmt, err := e.db.Prepare(`SELECT
 			c.id,
@@ -127,16 +126,15 @@ func (e *Edb) GetCompany(id int64) (Company, error) {
  		WHERE id = $1`)
 	if err != nil {
 		log.Println("GetCompany e.db.Prepare ", err)
-		return company, err
+		return Company{}, err
 	}
 	row := stmt.QueryRow(id)
-	company, err = scanCompany(row)
+	company, err := scanCompany(row)
 	return company, err
 }
 
 // GetCompanyList - get all companyes for list
 func (e *Edb) GetCompanyList() ([]Company, error) {
-	var companies []Company
 	rows, err := e.db.Query(`SELECT
 			c.id,
 			c.name,
@@ -155,15 +153,14 @@ func (e *Edb) GetCompanyList() ([]Company, error) {
 		ORDER BY c.name ASC`)
 	if err != nil {
 		log.Println("GetCompanyList e.db.Query ", err)
-		return companies, err
+		return []Company{}, err
 	}
-	companies, err = scanCompanies(rows, "list")
+	companies, err := scanCompanies(rows, "list")
 	return companies, err
 }
 
 // GetCompanySelect - get all companyes for select
 func (e *Edb) GetCompanySelect() ([]Company, error) {
-	var companies []Company
 	rows, err := e.db.Query(`SELECT
 			c.id,
 			c.name
@@ -172,27 +169,28 @@ func (e *Edb) GetCompanySelect() ([]Company, error) {
 		ORDER BY c.name ASC`)
 	if err != nil {
 		log.Println("GetCompanyList e.db.Query ", err)
-		return companies, err
+		return []Company{}, err
 	}
-	companies, err = scanCompanies(rows, "select")
+	companies, err := scanCompanies(rows, "select")
 	return companies, err
 }
 
 // CreateCompany - create new company
-func (e *Edb) CreateCompany(company Company) error {
+func (e *Edb) CreateCompany(company Company) (int64, error) {
 	stmt, err := e.db.Prepare(`INSERT INTO companies(name, address, scope_id, note) VALUES($1, $2, $3, $4) RETURNING id`)
 	if err != nil {
 		log.Println("CreateCompany e.db.Prepare ", err)
-		return err
+		return 0, err
 	}
 	err = stmt.QueryRow(s2n(company.Name), s2n(company.Address), i2n(company.ScopeID), s2n(company.Note)).Scan(&company.ID)
 	if err != nil {
 		log.Println("CreateScope db.QueryRow ", err)
+		return 0, err
 	}
 	e.CreateCompanyEmails(company)
 	e.CreateCompanyPhones(company)
 	e.CreateCompanyFaxes(company)
-	return err
+	return company.ID, nil
 }
 
 // UpdateCompany - save company changes
@@ -205,11 +203,12 @@ func (e *Edb) UpdateCompany(company Company) error {
 	_, err = stmt.Exec(i2n(company.ID), s2n(company.Name), s2n(company.Address), i2n(company.ScopeID), s2n(company.Note))
 	if err != nil {
 		log.Println("UpdateCompany stmt.Exec ", err)
+		return err
 	}
 	e.CreateCompanyEmails(company)
 	e.CreateCompanyPhones(company)
 	e.CreateCompanyFaxes(company)
-	return err
+	return nil
 }
 
 // DeleteCompany - delete company by id
