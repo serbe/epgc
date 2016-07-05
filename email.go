@@ -1,6 +1,9 @@
 package epgc
 
-import "log"
+import (
+	"database/sql"
+	"log"
+)
 
 // Email - struct for email
 type Email struct {
@@ -8,28 +11,92 @@ type Email struct {
 	CompanyID int64  `sql:"company_id, pk, null" json:"company-id"`
 	PeopleID  int64  `sql:"people_id, pk, null" json:"people-id"`
 	Email     string `sql:"email, null" json:"email"`
-	Note      string `sql:"note, null" json:"note"`
+}
+
+func scanEmail(row *sql.Row) (Email, error) {
+	var (
+		sid        sql.NullInt64
+		scompanyID sql.NullInt64
+		speopleID  sql.NullInt64
+		semail     sql.NullString
+		email      Email
+	)
+	err := row.Scan(&sid, &scompanyID, &speopleID, &semail)
+	if err != nil {
+		log.Println("scanScope row.Scan ", err)
+		return email, err
+	}
+	email.ID = n2i(sid)
+	email.CompanyID = n2i(scompanyID)
+	email.PeopleID = n2i(speopleID)
+	email.Email = n2s(semail)
+	return email, nil
+}
+
+func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
+	var (
+		emails []Email
+		err    error
+	)
+	for rows.Next() {
+		var (
+			sid    sql.NullInt64
+			semail sql.NullString
+			email  Email
+		)
+		switch opt {
+		case "list":
+			err = rows.Scan(&sid, &semail)
+		case "select":
+			err = rows.Scan(&sid, &semail)
+		}
+		if err != nil {
+			log.Println("scanEmails rows.Scan ", err)
+			return emails, err
+		}
+		email.ID = n2i(sid)
+		switch opt {
+		case "list":
+			email.Email = n2s(semail)
+		case "select":
+			email.Email = n2s(semail)
+			if len(email.Email) > 40 {
+				email.Email = email.Email[0:40]
+			}
+		}
+		emails = append(emails, email)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Println("scanEmails rows.Err ", err)
+	}
+	return emails, err
 }
 
 // GetEmail - get one email by id
-func (e *Edb) GetEmail(id int64) (email Email, err error) {
+func (e *Edb) GetEmail(id int64) (Email, error) {
+	var email Email
 	if id == 0 {
-		return
+		return email, nil
 	}
-	err = e.db.Model(&email).Where("id = ?", id).Select()
+	stmt, err := e.db.Prepare(" SELECT id,company_id,people_id,email FROM emails WHERE id = $1")
 	if err != nil {
-		log.Println("GetEmail ", err)
+		log.Println("GetEmail e.db.Prepare", err)
+		return email, err
 	}
-	return
+	row := stmt.QueryRow(id)
+	email, err = scanEmail(row)
+	return email, nil
 }
 
-// GetEmailAll - get all emails
-func (e *Edb) GetEmailAll() (emails []Email, err error) {
-	err = e.db.Model(&emails).Order("name ASC").Select()
+// GetEmailList - get all emails for list
+func (e *Edb) GetEmailList() ([]Email, error) {
+	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC")
 	if err != nil {
-		log.Println("GetEmailAll ", err)
+		log.Println("GetEmailList e.db.Query ", err)
 		return
 	}
+	emails, err = scanEmails(rows, "list")
 	return
 }
 
@@ -38,11 +105,12 @@ func (e *Edb) GetCompanyEmails(id int64) (emails []Email, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&emails).Where("company_id = ?", id).Order("email ASC").Select()
+	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC WHERE company_id = $1", id)
 	if err != nil {
-		log.Println("GetCompanyEmails ", err)
+		log.Println("GetCompanyEmails e.db.Query ", err)
 		return
 	}
+	emails, err = scanEmails(rows, "list")
 	return
 }
 
@@ -51,19 +119,25 @@ func (e *Edb) GetPeopleEmails(id int64) (emails []Email, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&emails).Where("people_id = ?", id).Order("email ASC").Select()
+	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC WHERE people_id = $1", id)
 	if err != nil {
-		log.Println("GetPeopleEmails ", err)
+		log.Println("GetPeopleEmails e.db.Query ", err)
 		return
 	}
+	emails, err = scanEmails(rows, "list")
 	return
 }
 
 // CreateEmail - create new email
 func (e *Edb) CreateEmail(email Email) (err error) {
-	err = e.db.Create(&email)
+	stmt, err := e.db.Prepare(`INSERT INTO emails(company_id, people_id, email) VALUES($1, $2, $3) RETURNING id`)
 	if err != nil {
-		log.Println("CreateEmail ", err)
+		log.Println("CreateEmail e.db.Prepare ", err)
+		return
+	}
+	err = stmt.QueryRow(i2n(email.CompanyID), i2n(email.PeopleID), s2n(email.Email)).Scan(&email.ID)
+	if err != nil {
+		log.Println("CreateEmail db.QueryRow ", err)
 	}
 	return
 }
@@ -106,9 +180,14 @@ func (e *Edb) CreatePeopleEmails(people People) (err error) {
 
 // UpdateEmail - save email changes
 func (e *Edb) UpdateEmail(email Email) (err error) {
-	e.db.Update(&email)
+	stmt, err := e.db.Prepare(`UPDATE emails SET company_id=$2,people_id=$3,email=$4 WHERE id=$1`)
 	if err != nil {
-		log.Println("UpdateEmail ", err)
+		log.Println("UpdateEmail e.db.Prepare ", err)
+		return
+	}
+	_, err = stmt.Exec(i2n(email.ID), i2n(email.CompanyID), i2n(email.PeopleID), s2n(email.Email))
+	if err != nil {
+		log.Println("UpdateEmail stmt.Exec ", err)
 	}
 	return
 }
@@ -118,7 +197,7 @@ func (e *Edb) DeleteEmail(id int64) (err error) {
 	if id == 0 {
 		return
 	}
-	_, err = e.db.Exec("DELETE FROM emails WHERE id = ?", id)
+	_, err = e.db.Exec("DELETE FROM emails WHERE id = $1", id)
 	if err != nil {
 		log.Println("DeleteEmail ", err)
 	}
@@ -130,7 +209,7 @@ func (e *Edb) DeleteCompanyEmails(id int64) (err error) {
 	if id == 0 {
 		return
 	}
-	_, err = e.db.Exec("DELETE FROM emails WHERE company_id = ?", id)
+	_, err = e.db.Exec("DELETE FROM emails WHERE company_id = $1", id)
 	if err != nil {
 		log.Println("DeleteCompanyEmails ", err)
 	}
@@ -142,7 +221,7 @@ func (e *Edb) DeletePeopleEmails(id int64) (err error) {
 	if id == 0 {
 		return
 	}
-	_, err = e.db.Exec("DELETE FROM emails WHERE people_id = ?", id)
+	_, err = e.db.Exec("DELETE FROM emails WHERE people_id = $1", id)
 	if err != nil {
 		log.Println("DeletePeopleEmails ", err)
 	}
@@ -150,7 +229,7 @@ func (e *Edb) DeletePeopleEmails(id int64) (err error) {
 }
 
 func (e *Edb) emailCreateTable() (err error) {
-	str := `CREATE TABLE IF NOT EXISTS emails (id bigserial primary key, company_id bigint, people_id bigint, email text, note text)`
+	str := `CREATE TABLE IF NOT EXISTS emails (id bigserial primary key, company_id bigint, people_id bigint, email text)`
 	_, err = e.db.Exec(str)
 	if err != nil {
 		log.Println("emailCreateTable ", err)

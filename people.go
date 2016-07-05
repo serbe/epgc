@@ -3,11 +3,14 @@ package epgc
 import (
 	"log"
 	"time"
+
+	"database/sql"
+
+	"github.com/lib/pq"
 )
 
 // People is struct for people
 type People struct {
-	TableName struct{}   `sql:"peoples"`
 	ID        int64      `sql:"id" json:"id"`
 	Name      string     `sql:"name" json:"name"`
 	Company   Company    `sql:"-"`
@@ -26,30 +29,77 @@ type People struct {
 	Trainings []Training `sql:"-"`
 }
 
+func scanPeople(row *sql.Row) (people People, err error) {
+	var (
+		pid        sql.NullInt64
+		pname      sql.NullString
+		pcompanyID sql.NullInt64
+		ppostID    sql.NullInt64
+		ppostGOID  sql.NullInt64
+		prankID    sql.NullInt64
+		pbirthday  pq.NullTime
+		pnote      sql.NullString
+		pemails    sql.NullString
+		pphones    sql.NullString
+		pfaxes     sql.NullString
+		// strainings sql.NullString
+	)
+	err = row.Scan(&pid, &pname, &pcompanyID, &ppostID, &ppostGOID, &prankID, &pnote, &pemails, &pphones, &pfaxes)
+	if err != nil {
+		log.Println("scanPeople row.Scan ", err)
+		return
+	}
+	people.ID = n2i(pid)
+	people.Name = n2s(pname)
+	people.CompanyID = n2i(pcompanyID)
+	people.PostID = n2i(ppostID)
+	people.PostGOID = n2i(ppostGOID)
+	people.RankID = n2i(prankID)
+	people.Note = n2s(pnote)
+	people.Emails = n2emails(pemails)
+	people.Phones = n2phones(pphones)
+	people.Faxes = n2faxes(pfaxes)
+	// people.Practices = n2practices(spractices)
+	return
+}
+
 // GetPeople - get one people by id
 func (e *Edb) GetPeople(id int64) (people People, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&people).Where("id = ?", id).Select()
+	stmt, err := e.db.Prepare(`SELECT
+		p.id,
+		p.name,
+		p.company_id,
+		p.post_id,
+		p.post_go_id,
+		p.rank_id,
+		p.birthday,
+		p.note,
+		array_to_string(array_agg(DISTINCT e.email),',') AS email,
+		array_to_string(array_agg(DISTINCT ph.phone),',') AS phone,
+		array_to_string(array_agg(DISTINCT f.phone),',') AS fax
+	FROM
+		peoples AS p
+	LEFT JOIN emails AS e ON p.id = e.people_id
+	LEFT JOIN phones AS ph ON p.id = ph.people_id AND ph.fax = false
+	LEFT JOIN phones AS f ON p.id = f.people_id AND f.fax = true
+	GROUP BY p.id
+	WHERE id = $1`)
 	if err != nil {
-		log.Println("GetPeople ", err)
+		log.Println("GetPeople e.db.Prepare ", err)
 		return
 	}
-	people.Company, _ = e.GetCompany(people.CompanyID)
-	people.Post, _ = e.GetPost(people.PostID)
-	people.PostGO, _ = e.GetPost(people.PostGOID)
-	people.Rank, _ = e.GetRank(people.RankID)
-	people.Emails, _ = e.GetPeopleEmails(people.ID)
-	people.Phones, _ = e.GetPeoplePhones(people.ID)
-	people.Faxes, _ = e.GetPeopleFaxes(people.ID)
+	row := stmt.QueryRow(id)
+	people, err = scanPeople(row)
 	// people.Trainings = GetPeopleTrainings(people.ID)
 	return
 }
 
-// GetPeopleAll - get all peoples
-func (e *Edb) GetPeopleAll() (peoples []People, err error) {
-	err = e.db.Model(&peoples).Order("name ASC").Select()
+// GetPeopleList - get all peoples for list
+func (e *Edb) GetPeopleList() (peoples []People, err error) {
+	rows, err = e.db.Query(&peoples).Order("name ASC").Select()
 	if err != nil {
 		log.Println("GetPeopleAll ", err)
 		return
@@ -69,6 +119,7 @@ func (e *Edb) GetPeopleAll() (peoples []People, err error) {
 
 // CreatePeople - create new people
 func (e *Edb) CreatePeople(people People) (err error) {
+
 	err = e.db.Create(&people)
 	if err != nil {
 		log.Println("CreatePeople ", err)
@@ -105,7 +156,7 @@ func (e *Edb) DeletePeople(id int64) (err error) {
 		log.Println("DeletePeople DeleteAllPeoplePhones ", err)
 		return
 	}
-	e.db.Exec("DELETE FROM peoples WHERE id = ?", id)
+	e.db.Exec("DELETE FROM peoples WHERE id = $1", id)
 	if err != nil {
 		log.Println("DeletePeople ", err)
 	}

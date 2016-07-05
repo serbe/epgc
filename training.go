@@ -21,7 +21,7 @@ func (e *Edb) GetTraining(id int64) (training Training, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&training).Where("id = ?", id).Select()
+	err = e.db.Model(&training).Where("id = $1", id).Select()
 	if err != nil {
 		log.Println("GetTraining ", err)
 	}
@@ -65,7 +65,7 @@ func (e *Edb) DeleteTraining(id int64) (err error) {
 	if id == 0 {
 		return
 	}
-	_, err = e.db.Exec("DELETE * FROM trainings WHERE id = ?", id)
+	_, err = e.db.Exec("DELETE * FROM trainings WHERE id = $1", id)
 	if err != nil {
 		log.Println("DeleteTraining ", err)
 	}

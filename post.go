@@ -16,7 +16,7 @@ func (e *Edb) GetPost(id int64) (post Post, err error) {
 	if id == 0 {
 		return post, nil
 	}
-	err = e.db.Model(&post).Where("id = ?", id).Select()
+	err = e.db.Model(&post).Where("id = $1", id).Select()
 	if err != nil {
 		return post, fmt.Errorf("GetPost: %s", err)
 	}
@@ -34,7 +34,7 @@ func (e *Edb) GetPostAll() (posts []Post, err error) {
 
 // GetPostNoGOAll - get all post with no go
 func (e *Edb) GetPostNoGOAll() (posts []Post, err error) {
-	_, err = e.db.Query(&posts, "SELECT * FROM posts WHERE go = ?", false)
+	_, err = e.db.Query(&posts, "SELECT * FROM posts WHERE go = $1", false)
 	if err != nil {
 		return posts, fmt.Errorf("GetPostNoGOAll: %s", err)
 	}
@@ -43,7 +43,7 @@ func (e *Edb) GetPostNoGOAll() (posts []Post, err error) {
 
 // GetPostGOAll - get all post with go
 func (e *Edb) GetPostGOAll() (posts []Post, err error) {
-	_, err = e.db.Query(&posts, "SELECT * FROM posts WHERE go = ?", true)
+	_, err = e.db.Query(&posts, "SELECT * FROM posts WHERE go = $1", true)
 	if err != nil {
 		return posts, fmt.Errorf("GetPostGOAll: %s", err)
 	}

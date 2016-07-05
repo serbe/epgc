@@ -25,7 +25,7 @@ func (e *Edb) GetPractice(id int64) (practice Practice, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&practice).Where("id = ?", id).Select()
+	err = e.db.Model(&practice).Where("id = $1", id).Select()
 	if err != nil {
 		log.Println("GetPractice: ", err)
 		return practice, fmt.Errorf("GetPractice: %s", err)
@@ -53,7 +53,7 @@ func (e *Edb) GetCompanyPractices(id int64) (practices []Practice, err error) {
 	if id == 0 {
 		return
 	}
-	err = e.db.Model(&practices).Where("company_id = ?", id).Order("date_of_practice ASC").Select()
+	err = e.db.Model(&practices).Where("company_id = $1", id).Order("date_of_practice ASC").Select()
 	if err != nil {
 		log.Println("GetCompanyPractices: ", err)
 		return practices, fmt.Errorf("GetCompanyPractices: %s", err)

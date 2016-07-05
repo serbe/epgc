@@ -100,13 +100,13 @@ func (e *Edb) GetScopeSelect() (scopes []Scope, err error) {
 }
 
 // CreateScope - create new scope
-func (e *Edb) CreateScope(s Scope) (id int64, err error) {
+func (e *Edb) CreateScope(scope Scope) (id int64, err error) {
 	stmt, err := e.db.Prepare(`INSERT INTO scopes(name, note) VALUES($1, $2) RETURNING id`)
 	if err != nil {
 		log.Println("CreateScope e.db.Prepare ", err)
 		return
 	}
-	err = stmt.QueryRow(s2n(s.Name), s2n(s.Note)).Scan(&id)
+	err = stmt.QueryRow(s2n(scope.Name), s2n(scope.Note)).Scan(&scope.ID)
 	if err != nil {
 		log.Println("CreateScope db.QueryRow ", err)
 	}
