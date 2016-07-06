@@ -23,7 +23,7 @@ func scanEmail(row *sql.Row) (Email, error) {
 	)
 	err := row.Scan(&sid, &scompanyID, &speopleID, &semail)
 	if err != nil {
-		log.Println("scanScope row.Scan ", err)
+		log.Println("scanEmail row.Scan ", err)
 		return email, err
 	}
 	email.ID = n2i(sid)
@@ -34,10 +34,7 @@ func scanEmail(row *sql.Row) (Email, error) {
 }
 
 func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
-	var (
-		emails []Email
-		err    error
-	)
+	var emails []Email
 	for rows.Next() {
 		var (
 			sid    sql.NullInt64
@@ -46,13 +43,17 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 		)
 		switch opt {
 		case "list":
-			err = rows.Scan(&sid, &semail)
+			err := rows.Scan(&sid, &semail)
+			if err != nil {
+				log.Println("scanEmails rows.Scan ", err)
+				return emails, err
+			}
 		case "select":
-			err = rows.Scan(&sid, &semail)
-		}
-		if err != nil {
-			log.Println("scanEmails rows.Scan ", err)
-			return emails, err
+			err := rows.Scan(&sid, &semail)
+			if err != nil {
+				log.Println("scanEmails rows.Scan ", err)
+				return emails, err
+			}
 		}
 		email.ID = n2i(sid)
 		switch opt {
@@ -66,7 +67,7 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 		}
 		emails = append(emails, email)
 	}
-	err = rows.Err()
+	err := rows.Err()
 	if err != nil {
 		log.Println("scanEmails rows.Err ", err)
 	}
@@ -169,7 +170,7 @@ func (e *Edb) CreatePeopleEmails(people People) error {
 	}
 	for _, email := range people.Emails {
 		email.PeopleID = people.ID
-		err = e.CreateEmail(email)
+		_, err = e.CreateEmail(email)
 		if err != nil {
 			log.Println("CreatePeopleEmails CreateEmail ", err)
 			return err

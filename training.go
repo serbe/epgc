@@ -7,7 +7,6 @@ import (
 
 // Training - struct for training
 type Training struct {
-	TableName struct{}  `sql:"trainings"`
 	ID        int64     `sql:"id" json:"id" `
 	StartDate time.Time `sql:"start_date" json:"start-date"`
 	EndDate   time.Time `sql:"end_date" json:"end-date"`

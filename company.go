@@ -78,6 +78,7 @@ func scanCompanies(rows *sql.Rows, opt string) ([]Company, error) {
 			log.Println("scanCompanies rows.Scan ", err)
 			return companies, err
 		}
+		company.ID = n2i(sid)
 		switch opt {
 		case "list":
 			company.Name = n2s(sname)
@@ -187,9 +188,9 @@ func (e *Edb) CreateCompany(company Company) (int64, error) {
 		log.Println("CreateScope db.QueryRow ", err)
 		return 0, err
 	}
-	e.CreateCompanyEmails(company)
-	e.CreateCompanyPhones(company)
-	e.CreateCompanyFaxes(company)
+	_ = e.CreateCompanyEmails(company)
+	_ = e.CreateCompanyPhones(company, false)
+	_ = e.CreateCompanyPhones(company, true)
 	return company.ID, nil
 }
 
@@ -205,9 +206,9 @@ func (e *Edb) UpdateCompany(company Company) error {
 		log.Println("UpdateCompany stmt.Exec ", err)
 		return err
 	}
-	e.CreateCompanyEmails(company)
-	e.CreateCompanyPhones(company)
-	e.CreateCompanyFaxes(company)
+	_ = e.CreateCompanyEmails(company)
+	_ = e.CreateCompanyPhones(company, false)
+	_ = e.CreateCompanyPhones(company, true)
 	return nil
 }
 

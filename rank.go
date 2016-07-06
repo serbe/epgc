@@ -12,138 +12,144 @@ type Rank struct {
 	Note string `sql:"note, null" json:"note"`
 }
 
-func scanRank(row *sql.Row) (rank Rank, err error) {
+func scanRank(row *sql.Row) (Rank, error) {
 	var (
-		id   sql.NullInt64
-		name sql.NullString
-		note sql.NullString
+		sid   sql.NullInt64
+		sname sql.NullString
+		snote sql.NullString
+		rank  Rank
 	)
-	err = row.Scan(&id, &name, &note)
+	err := row.Scan(&sid, &sname, &snote)
 	if err != nil {
 		log.Println("scanRank row.Scan ", err)
-		return
+		return rank, err
 	}
-	rank.ID = n2i(id)
-	rank.Name = n2s(name)
-	rank.Note = n2s(note)
-	return
+	rank.ID = n2i(sid)
+	rank.Name = n2s(sname)
+	rank.Note = n2s(snote)
+	return rank, nil
 }
 
-func scanRanks(rows *sql.Rows, opt string) (ranks []Rank, err error) {
+func scanRanks(rows *sql.Rows, opt string) ([]Rank, error) {
+	var ranks []Rank
 	for rows.Next() {
 		var (
-			id   sql.NullInt64
-			name sql.NullString
-			note sql.NullString
-			rank Rank
+			sid   sql.NullInt64
+			sname sql.NullString
+			snote sql.NullString
+			rank  Rank
 		)
 		switch opt {
 		case "list":
-			err = rows.Scan(&id, &name, &note)
+			err := rows.Scan(&sid, &sname, &snote)
+			if err != nil {
+				log.Println("scanRanks rows.Scan list ", err)
+				return ranks, err
+			}
 		case "select":
-			err = rows.Scan(&id, &name)
+			err := rows.Scan(&sid, &sname)
+			if err != nil {
+				log.Println("scanRanks rows.Scan select ", err)
+				return ranks, err
+			}
 		}
-		if err != nil {
-			log.Println("scanRanks rows.Scan ", err)
-			return
-		}
-		rank.ID = n2i(id)
+		rank.ID = n2i(sid)
 		switch opt {
 		case "list":
-			rank.Name = n2s(name)
-			rank.Note = n2s(note)
+			rank.Name = n2s(sname)
+			rank.Note = n2s(snote)
 		case "select":
-			rank.Name = n2s(name)
+			rank.Name = n2s(sname)
 			if len(rank.Name) > 40 {
 				rank.Name = rank.Name[0:40]
 			}
 		}
 		ranks = append(ranks, rank)
 	}
-	err = rows.Err()
+	err := rows.Err()
 	if err != nil {
 		log.Println("scanRanks rows.Err ", err)
 	}
-	return
+	return ranks, nil
 }
 
 // GetRank - get one rank by id
-func (e *Edb) GetRank(id int64) (rank Rank, err error) {
+func (e *Edb) GetRank(id int64) (Rank, error) {
 	if id == 0 {
-		return
+		return Rank{}, nil
 	}
 	row := e.db.QueryRow("SELECT id,name,note FROM ranks WHERE id = $1", id)
-	rank, err = scanRank(row)
-	return
+	rank, err := scanRank(row)
+	return rank, err
 }
 
 // GetRankList - get all rank for list
-func (e *Edb) GetRankList() (ranks []Rank, err error) {
-	rows, err = e.db.Query("SELECT id,name,note FROM ranks ORDER BY name ASC")
+func (e *Edb) GetRankList() ([]Rank, error) {
+	rows, err := e.db.Query("SELECT id,name,note FROM ranks ORDER BY name ASC")
 	if err != nil {
 		log.Println("GetRankList e.db.Query ", err)
-		return
+		return []Rank{}, err
 	}
-	ranks, err = scanRanks(rows, "list")
-	return
+	ranks, err := scanRanks(rows, "list")
+	return ranks, err
 }
 
 // GetRankSelect - get all rank for select
-func (e *Edb) GetRankSelect() (ranks []Rank, err error) {
-	rows, err = e.db.Query("SELECT id,name FROM ranks ORDER BY name ASC")
+func (e *Edb) GetRankSelect() ([]Rank, error) {
+	rows, err := e.db.Query("SELECT id,name FROM ranks ORDER BY name ASC")
 	if err != nil {
 		log.Println("GetRankSelect e.db.Query ", err)
-		return
+		return []Rank{}, err
 	}
-	ranks, err = scanRanks(rows, "select")
-	return
+	ranks, err := scanRanks(rows, "select")
+	return ranks, err
 }
 
 // CreateRank - create new rank
-func (e *Edb) CreateRank(rank Rank) (id int64, err error) {
+func (e *Edb) CreateRank(rank Rank) (int64, error) {
 	stmt, err := e.db.Prepare(`INSERT INTO ranks(name, note) VALUES($1, $2) RETURNING id`)
 	if err != nil {
 		log.Println("CreateRank e.db.Prepare ", err)
-		return
+		return 0, err
 	}
 	err = stmt.QueryRow(s2n(rank.Name), s2n(rank.Note)).Scan(&rank.ID)
 	if err != nil {
 		log.Println("CreateRank db.QueryRow ", err)
 	}
-	return
+	return rank.ID, err
 }
 
 // UpdateRank - save rank changes
-func (e *Edb) UpdateRank(s Rank) (err error) {
+func (e *Edb) UpdateRank(s Rank) error {
 	stmt, err := e.db.Prepare("UPDATE ranks SET name=$2,note=$3 WHERE id = $1")
 	if err != nil {
 		log.Println("UpdateRank e.db.Prepare ", err)
-		return
+		return err
 	}
 	_, err = stmt.Exec(i2n(s.ID), s2n(s.Name), s2n(s.Note))
 	if err != nil {
 		log.Println("UpdateRank stmt.Exec ", err)
 	}
-	return
+	return err
 }
 
 // DeleteRank - delete rank by id
-func (e *Edb) DeleteRank(id int64) (err error) {
+func (e *Edb) DeleteRank(id int64) error {
 	if id == 0 {
-		return
+		return nil
 	}
-	_, err = e.db.Exec("DELETE FROM ranks WHERE id = $1", id)
+	_, err := e.db.Exec("DELETE FROM ranks WHERE id = $1", id)
 	if err != nil {
 		log.Println("DeleteRank e.db.Exec ", err)
 	}
-	return
+	return err
 }
 
-func (e *Edb) rankCreateTable() (err error) {
+func (e *Edb) rankCreateTable() error {
 	str := `CREATE TABLE IF NOT EXISTS ranks (id bigserial primary key, name text, note text)`
-	_, err = e.db.Exec(str)
+	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("rankCreateTable e.db.Exec ", err)
 	}
-	return
+	return err
 }

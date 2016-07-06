@@ -31,37 +31,89 @@ type People struct {
 
 func scanPeople(row *sql.Row) (People, error) {
 	var (
-		pid        sql.NullInt64
-		pname      sql.NullString
-		pcompanyID sql.NullInt64
-		ppostID    sql.NullInt64
-		ppostGOID  sql.NullInt64
-		prankID    sql.NullInt64
-		pbirthday  pq.NullTime
-		pnote      sql.NullString
-		pemails    sql.NullString
-		pphones    sql.NullString
-		pfaxes     sql.NullString
+		sid        sql.NullInt64
+		sname      sql.NullString
+		scompanyID sql.NullInt64
+		spostID    sql.NullInt64
+		spostGOID  sql.NullInt64
+		srankID    sql.NullInt64
+		sbirthday  pq.NullTime
+		snote      sql.NullString
+		semails    sql.NullString
+		sphones    sql.NullString
+		sfaxes     sql.NullString
 		// strainings sql.NullString
 		people People
 	)
-	err := row.Scan(&pid, &pname, &pcompanyID, &ppostID, &ppostGOID, &prankID, &pnote, &pemails, &pphones, &pfaxes)
+	err := row.Scan(&sid, &sname, &scompanyID, &spostID, &spostGOID, &srankID, &snote, &semails, &sphones, &sfaxes)
 	if err != nil {
 		log.Println("scanPeople row.Scan ", err)
 		return People{}, err
 	}
-	people.ID = n2i(pid)
-	people.Name = n2s(pname)
-	people.CompanyID = n2i(pcompanyID)
-	people.PostID = n2i(ppostID)
-	people.PostGOID = n2i(ppostGOID)
-	people.RankID = n2i(prankID)
-	people.Note = n2s(pnote)
-	people.Emails = n2emails(pemails)
-	people.Phones = n2phones(pphones)
-	people.Faxes = n2faxes(pfaxes)
+	people.ID = n2i(sid)
+	people.Name = n2s(sname)
+	people.CompanyID = n2i(scompanyID)
+	people.PostID = n2i(spostID)
+	people.PostGOID = n2i(spostGOID)
+	people.RankID = n2i(srankID)
+	people.Note = n2s(snote)
+	people.Emails = n2emails(semails)
+	people.Phones = n2phones(sphones)
+	people.Faxes = n2faxes(sfaxes)
 	// people.Practices = n2practices(spractices)
 	return people, nil
+}
+
+func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
+	var (
+		peoples []People
+		err     error
+	)
+	for rows.Next() {
+		var (
+			sid          sql.NullInt64
+			sname        sql.NullString
+			scompanyName sql.NullString
+			spostName    sql.NullString
+			sphones      sql.NullString
+			sfaxes       sql.NullString
+			people       People
+		)
+		switch opt {
+		case "list":
+			err := rows.Scan(&sid, &sname, &scompanyName, &spostName, &sphones, &sfaxes)
+			if err != nil {
+				log.Println("scanPeople rows.Scan list ", err)
+				return peoples, err
+			}
+		case "select":
+			err := rows.Scan(&sid, &sname)
+			if err != nil {
+				log.Println("scanPeople rows.Scan select ", err)
+				return peoples, err
+			}
+		}
+		people.ID = n2i(sid)
+		switch opt {
+		case "list":
+			people.Name = n2s(sname)
+			people.Company.Name = n2s(scompanyName)
+			people.Post.Name = n2s(spostName)
+			people.Phones = n2phones(sphones)
+			people.Faxes = n2faxes(sfaxes)
+		case "select":
+			people.Name = n2s(sname)
+			if len(people.Name) > 40 {
+				people.Name = people.Name[0:40]
+			}
+		}
+		peoples = append(peoples, people)
+	}
+	err = rows.Err()
+	if err != nil {
+		log.Println("scanPeoples rows.Err ", err)
+	}
+	return peoples, err
 }
 
 // GetPeople - get one people by id
@@ -93,58 +145,88 @@ func (e *Edb) GetPeople(id int64) (People, error) {
 		return People{}, err
 	}
 	row := stmt.QueryRow(id)
-	people, err = scanPeople(row)
+	people, err := scanPeople(row)
 	// people.Trainings = GetPeopleTrainings(people.ID)
 	return people, err
 }
 
 // GetPeopleList - get all peoples for list
 func (e *Edb) GetPeopleList() ([]People, error) {
-	rows, err = e.db.Query(&peoples).Order("name ASC").Select()
+	rows, err := e.db.Query(`SELECT
+		p.id,
+		p.name,
+		c.name AS company_name,
+		po.name AS post_name,
+		array_to_string(array_agg(DISTINCT ph.phone),',') AS phone,
+		array_to_string(array_agg(DISTINCT f.phone),',') AS fax
+	FROM
+		peoples AS p
+	LEFT JOIN companies AS c ON p.company_id = c.id
+	LEFT JOIN posts AS po ON p.post_id = po.id
+	LEFT JOIN phones AS ph ON p.id = ph.people_id AND ph.fax = false
+	LEFT JOIN phones AS f ON p.id = f.people_id AND f.fax = true
+	GROUP BY p.id, c.name, po.name
+	ORDER BY name ASC`)
 	if err != nil {
-		log.Println("GetPeopleAll ", err)
-		return
+		log.Println("GetPeopleList e.db.Query ", err)
+		return []People{}, err
 	}
-	for i := range peoples {
-		peoples[i].Company, _ = e.GetCompany(peoples[i].CompanyID)
-		peoples[i].Post, _ = e.GetPost(peoples[i].PostID)
-		peoples[i].PostGO, _ = e.GetPost(peoples[i].PostGOID)
-		peoples[i].Rank, _ = e.GetRank(peoples[i].RankID)
-		peoples[i].Emails, _ = e.GetPeopleEmails(peoples[i].ID)
-		peoples[i].Phones, _ = e.GetPeoplePhones(peoples[i].ID)
-		peoples[i].Faxes, _ = e.GetPeopleFaxes(peoples[i].ID)
-		// people[i].Trainings = GetPeopleTrainings(people[i].ID)
+	peoples, err := scanPeoples(rows, "list")
+	return peoples, err
+}
+
+// GetPeopleSelect - get all peoples for select
+func (e *Edb) GetPeopleSelect() ([]People, error) {
+	rows, err := e.db.Query(`SELECT
+		p.id,
+		p.name
+	FROM
+		peoples AS p
+	ORDER BY name ASC`)
+	if err != nil {
+		log.Println("GetPeopleSelect e.db.Query ", err)
+		return []People{}, err
 	}
-	return
+	peoples, err := scanPeoples(rows, "select")
+	return peoples, err
 }
 
 // CreatePeople - create new people
-func (e *Edb) CreatePeople(people People) (err error) {
-
-	err = e.db.Create(&people)
+func (e *Edb) CreatePeople(people People) (int64, error) {
+	stmt, err := e.db.Prepare(`INSERT INTO peoples(name, company_id, post_id, post_go_id, rank_id, birthday, note) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id`)
 	if err != nil {
-		log.Println("CreatePeople ", err)
-		return err
+		log.Println("CreatePeople e.db.Prepare ", err)
+		return 0, err
+	}
+	err = stmt.QueryRow(s2n(people.Name), i2n(people.CompanyID), i2n(people.PostID), i2n(people.PostGOID), i2n(people.RankID), d2n(people.Birthday), s2n(people.Note)).Scan(&people.ID)
+	if err != nil {
+		log.Println("CreatePeople db.QueryRow ", err)
+		return 0, err
 	}
 	_ = e.CreatePeopleEmails(people)
-	_ = e.CreatePeoplePhones(people)
-	_ = e.CreatePeopleFaxes(people)
+	_ = e.CreatePeoplePhones(people, false)
+	_ = e.CreatePeoplePhones(people, true)
 	// CreatePeopleTrainings(people)
-	return err
+	return people.ID, nil
 }
 
 // UpdatePeople - save people changes
 func (e *Edb) UpdatePeople(people People) error {
-	err = e.db.Update(&people)
+	stmt, err := e.db.Prepare(`UPDATE peoples SET name=$2, company_id=$3, post_id=$4, post_go_id=$5, rank_id=$6, birthday=$7, note=$8 WHERE id = $1`)
 	if err != nil {
-		log.Println("UpdatePeople ", err)
+		log.Println("UpdatePeople e.db.Prepare ", err)
+		return err
+	}
+	_, err = stmt.Exec(i2n(people.ID), s2n(people.Name), i2n(people.CompanyID), i2n(people.PostID), i2n(people.PostGOID), i2n(people.RankID), d2n(people.Birthday), s2n(people.Note))
+	if err != nil {
+		log.Println("UpdatePeople stmt.Exec ", err)
 		return err
 	}
 	_ = e.CreatePeopleEmails(people)
-	_ = e.CreatePeoplePhones(people)
-	_ = e.CreatePeopleFaxes(people)
+	_ = e.CreatePeoplePhones(people, false)
+	_ = e.CreatePeoplePhones(people, true)
 	// CreatePeopleTrainings(people)
-	return err
+	return nil
 }
 
 // DeletePeople - delete people by id
@@ -159,7 +241,7 @@ func (e *Edb) DeletePeople(id int64) error {
 	}
 	e.db.Exec("DELETE FROM peoples WHERE id = $1", id)
 	if err != nil {
-		log.Println("DeletePeople ", err)
+		log.Println("DeletePeople e.db.Exec ", err)
 	}
 	return err
 }

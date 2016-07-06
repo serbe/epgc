@@ -14,19 +14,19 @@ type Kind struct {
 
 func scanKind(row *sql.Row) (Kind, error) {
 	var (
-		id   sql.NullInt64
-		name sql.NullString
-		note sql.NullString
-		kind Kind
+		sid   sql.NullInt64
+		sname sql.NullString
+		snote sql.NullString
+		kind  Kind
 	)
-	err := row.Scan(&id, &name, &note)
+	err := row.Scan(&sid, &sname, &snote)
 	if err != nil {
 		log.Println("scanKind row.Scan ", err)
 		return kind, err
 	}
-	kind.ID = n2i(id)
-	kind.Name = n2s(name)
-	kind.Note = n2s(note)
+	kind.ID = n2i(sid)
+	kind.Name = n2s(sname)
+	kind.Note = n2s(snote)
 	return kind, nil
 }
 
@@ -34,32 +34,32 @@ func scanKinds(rows *sql.Rows, opt string) ([]Kind, error) {
 	var kinds []Kind
 	for rows.Next() {
 		var (
-			id   sql.NullInt64
-			name sql.NullString
-			note sql.NullString
-			kind Kind
+			sid   sql.NullInt64
+			sname sql.NullString
+			snote sql.NullString
+			kind  Kind
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&id, &name, &note)
+			err := rows.Scan(&sid, &sname, &snote)
 			if err != nil {
 				log.Println("scanKinds list rows.Scan ", err)
 				return kinds, err
 			}
 		case "select":
-			err := rows.Scan(&id, &name)
+			err := rows.Scan(&sid, &sname)
 			if err != nil {
 				log.Println("scanKinds select rows.Scan ", err)
 				return kinds, err
 			}
 		}
-		kind.ID = n2i(id)
+		kind.ID = n2i(sid)
 		switch opt {
 		case "list":
-			kind.Name = n2s(name)
-			kind.Note = n2s(note)
+			kind.Name = n2s(sname)
+			kind.Note = n2s(snote)
 		case "select":
-			kind.Name = n2s(name)
+			kind.Name = n2s(sname)
 			if len(kind.Name) > 40 {
 				kind.Name = kind.Name[0:40]
 			}

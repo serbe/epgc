@@ -8,7 +8,6 @@ import (
 
 // Practice - struct for practice
 type Practice struct {
-	TableName      struct{}  `sql:"practices"`
 	ID             int64     `sql:"id" json:"id"`
 	Company        Company   `sql:"-"`
 	CompanyID      int64     `sql:"company_id, null" json:"company-id"`
