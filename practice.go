@@ -78,13 +78,13 @@ func scanPractices(rows *sql.Rows, opt string) ([]Practice, error) {
 				return practices, err
 			}
 			practice.Kind.Name = n2s(sKindName)
-			if len(practice.Kind.Name) > 40 {
-				practice.Kind.Name = practice.Kind.Name[0:40]
-			}
+			// if len(practice.Kind.Name) > 210 {
+			// 	practice.Kind.Name = practice.Kind.Name[0:210]
+			// }
 			practice.Topic = n2s(sTopic)
-			if len(practice.Topic) > 40 {
-				practice.Topic = practice.Topic[0:40]
-			}
+			// if len(practice.Topic) > 210 {
+			// 	practice.Topic = practice.Topic[0:210]
+			// }
 		}
 		practice.ID = n2i(sID)
 		practice.DateOfPractice = n2d(sDateOfPractice)

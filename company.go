@@ -85,9 +85,9 @@ func scanCompanies(rows *sql.Rows, opt string) ([]Company, error) {
 				return companies, err
 			}
 			company.Name = n2s(sName)
-			if len(company.Name) > 40 {
-				company.Name = company.Name[0:40]
-			}
+			// if len(company.Name) > 210 {
+			// 	company.Name = company.Name[0:210]
+			// }
 		}
 		company.ID = n2i(sID)
 		companies = append(companies, company)

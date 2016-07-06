@@ -96,9 +96,9 @@ func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
 				return peoples, err
 			}
 			people.Name = n2s(sName)
-			if len(people.Name) > 40 {
-				people.Name = people.Name[0:40]
-			}
+			// if len(people.Name) > 210 {
+			// 	people.Name = people.Name[0:210]
+			// }
 		}
 		people.ID = n2i(sID)
 		peoples = append(peoples, people)

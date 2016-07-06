@@ -60,9 +60,9 @@ func scanPosts(rows *sql.Rows, opt string) ([]Post, error) {
 				return posts, err
 			}
 			post.Name = n2s(sname)
-			if len(post.Name) > 40 {
-				post.Name = post.Name[0:40]
-			}
+			// if len(post.Name) > 210 {
+			// 	post.Name = post.Name[0:210]
+			// }
 		}
 		post.ID = n2i(sid)
 		posts = append(posts, post)

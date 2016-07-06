@@ -56,9 +56,9 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 				return emails, err
 			}
 			email.Email = n2s(semail)
-			if len(email.Email) > 40 {
-				email.Email = email.Email[0:40]
-			}
+			// if len(email.Email) > 210 {
+			// 	email.Email = email.Email[0:210]
+			// }
 		}
 		email.ID = n2i(sid)
 		emails = append(emails, email)

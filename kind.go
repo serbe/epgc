@@ -55,9 +55,9 @@ func scanKinds(rows *sql.Rows, opt string) ([]Kind, error) {
 				return kinds, err
 			}
 			kind.Name = n2s(sname)
-			if len(kind.Name) > 40 {
-				kind.Name = kind.Name[0:40]
-			}
+			// if len(kind.Name) > 210 {
+			// 	kind.Name = kind.Name[0:210]
+			// }
 		}
 		kind.ID = n2i(sid)
 		kinds = append(kinds, kind)

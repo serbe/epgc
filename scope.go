@@ -55,9 +55,9 @@ func scanScopes(rows *sql.Rows, opt string) ([]Scope, error) {
 				return []Scope{}, err
 			}
 			scope.Name = n2s(sname)
-			if len(scope.Name) > 40 {
-				scope.Name = scope.Name[0:40]
-			}
+			// if len(scope.Name) > 210 {
+			// 	scope.Name = scope.Name[0:210]
+			// }
 		}
 		scope.ID = n2i(sid)
 		scopes = append(scopes, scope)

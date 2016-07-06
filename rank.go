@@ -55,9 +55,9 @@ func scanRanks(rows *sql.Rows, opt string) ([]Rank, error) {
 				return ranks, err
 			}
 			rank.Name = n2s(sname)
-			if len(rank.Name) > 40 {
-				rank.Name = rank.Name[0:40]
-			}
+			// if len(rank.Name) > 210 {
+			// 	rank.Name = rank.Name[0:210]
+			// }
 		}
 		rank.ID = n2i(sid)
 		ranks = append(ranks, rank)
