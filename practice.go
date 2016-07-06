@@ -162,7 +162,7 @@ func (e *Edb) GetPracticeCompany(id int64) ([]Practice, error) {
 		kinds AS k ON k.id = p.kind_id
 	ORDER BY
 		date_of_practice
-	WHERE 
+	WHERE
 	    p.company_id = $1`)
 	if err != nil {
 		log.Println("GetPracticeCompany e.db.Prepare ", err)
@@ -212,12 +212,12 @@ func (e *Edb) DeletePractice(id int64) error {
 	return err
 }
 
-func (e *Edb) practiceCreateTable() (err error) {
+func (e *Edb) practiceCreateTable() error {
 	str := `CREATE TABLE IF NOT EXISTS practices (id bigserial primary key, company_id bigint, kind_id bigint, topic text, date_of_practice date, note text)`
-	_, err = e.db.Exec(str)
+	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("practiceCreateTable e.db.Exec: ", err)
 		return fmt.Errorf("practiceCreateTable e.db.Exec: %s", err)
 	}
-	return
+	return err
 }
