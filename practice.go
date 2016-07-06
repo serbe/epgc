@@ -1,9 +1,12 @@
 package epgc
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/lib/pq"
 )
 
 // Practice - struct for practice
@@ -19,78 +22,194 @@ type Practice struct {
 	Note           string    `sql:"note, null" json:"note"`
 }
 
+func scanPractice(row *sql.Row) (Practice, error) {
+	var (
+		sID             sql.NullInt64
+		sCompanyID      sql.NullInt64
+		sKindID         sql.NullInt64
+		sTopic          sql.NullString
+		sDateOfPractice pq.NullTime
+		sNote           sql.NullString
+		practice        Practice
+	)
+	err := row.Scan(&sID, &sCompanyID, &sKindID, &sTopic, &sDateOfPractice, &sNote)
+	if err != nil {
+		log.Println("scanPractice row.Scan ", err)
+		return practice, err
+	}
+	practice.ID = n2i(sID)
+	practice.CompanyID = n2i(sCompanyID)
+	practice.KindID = n2i(sKindID)
+	practice.Topic = n2s(sTopic)
+	practice.DateOfPractice = n2d(sDateOfPractice)
+	practice.Note = n2s(sNote)
+	return practice, nil
+}
+
+func scanPractices(rows *sql.Rows, opt string) ([]Practice, error) {
+	var practices []Practice
+	for rows.Next() {
+		var (
+			sID sql.NullInt64
+			// sCompanyID      sql.NullInt64
+			sCompanyName sql.NullString
+			// sKindID         sql.NullInt64
+			sKindName       sql.NullString
+			sTopic          sql.NullString
+			sDateOfPractice pq.NullTime
+			sNote           sql.NullString
+			practice        Practice
+		)
+		switch opt {
+		case "list":
+			err := rows.Scan(&sID, &sCompanyName, &sKindName, &sTopic, &sDateOfPractice, &sNote)
+			if err != nil {
+				log.Println("scanPractices rows.Scan list ", err)
+				return practices, err
+			}
+			practice.Company.Name = n2s(sCompanyName)
+			practice.Kind.Name = n2s(sKindName)
+			practice.Topic = n2s(sTopic)
+			practice.Note = n2s(sNote)
+		case "company":
+			err := rows.Scan(&sID, &sKindName, &sTopic, &sDateOfPractice)
+			if err != nil {
+				log.Println("scanPractices rows.Scan company ", err)
+				return practices, err
+			}
+			practice.Kind.Name = n2s(sKindName)
+			if len(practice.Kind.Name) > 40 {
+				practice.Kind.Name = practice.Kind.Name[0:40]
+			}
+			practice.Topic = n2s(sTopic)
+			if len(practice.Topic) > 40 {
+				practice.Topic = practice.Topic[0:40]
+			}
+		}
+		practice.ID = n2i(sID)
+		practice.DateOfPractice = n2d(sDateOfPractice)
+		practices = append(practices, practice)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanPractices rows.Err ", err)
+	}
+	return practices, err
+}
+
 // GetPractice - get one practice by id
-func (e *Edb) GetPractice(id int64) (practice Practice, err error) {
+func (e *Edb) GetPractice(id int64) (Practice, error) {
 	if id == 0 {
-		return
+		return Practice{}, nil
 	}
-	err = e.db.Model(&practice).Where("id = $1", id).Select()
+	stmt, err := e.db.Prepare(`SELECT
+		id,
+		company_id,
+		kind_id,
+		topic,
+		date_of_practice,
+		note
+	FROM
+		practices
+	WHERE id = $1`)
 	if err != nil {
-		log.Println("GetPractice: ", err)
-		return practice, fmt.Errorf("GetPractice: %s", err)
+		log.Println("GetPractice e.db.Prepare ", err)
+		return Practice{}, err
 	}
-	return
+	row := stmt.QueryRow(id)
+	practice, err := scanPractice(row)
+	return practice, err
 }
 
-// GetPracticeAll - get all practices
-func (e *Edb) GetPracticeAll() (practices []Practice, err error) {
-	err = e.db.Model(&practices).Order("date_of_practice ASC").Select()
+// GetPracticeList - get all practices for list
+func (e *Edb) GetPracticeList() ([]Practice, error) {
+	rows, err := e.db.Query(`SELECT
+		p.id,
+		c.name AS company_name,
+		k.name AS kind_name,
+		p.topic,
+		p.date_of_practice,
+		p.note
+	FROM
+		practices AS p
+	LEFT JOIN
+		companies AS c ON c.id = p.company_id
+	LEFT JOIN
+		kinds AS k ON k.id = p.kind_id
+	ORDER BY
+		date_of_practice`)
 	if err != nil {
-		log.Println("GetPracticeAll: ", err)
-		return practices, fmt.Errorf("GetPracticeAll: %s", err)
+		log.Println("GetPracticeAll e.db.Query ", err)
+		return []Practice{}, err
 	}
-	for i := range practices {
-		practices[i].Company, _ = e.GetCompany(practices[i].CompanyID)
-		practices[i].Kind, _ = e.GetKind(practices[i].KindID)
-		practices[i].DateStr = setStrMonth(practices[i].DateOfPractice)
-	}
-	return
+	practices, err := scanPractices(rows, "list")
+	return practices, err
 }
 
-// GetCompanyPractices - get all practices by company id
-func (e *Edb) GetCompanyPractices(id int64) (practices []Practice, err error) {
+// GetPracticeCompany - get all practices of company
+func (e *Edb) GetPracticeCompany(id int64) ([]Practice, error) {
 	if id == 0 {
-		return
+		return []Practice{}, nil
 	}
-	err = e.db.Model(&practices).Where("company_id = $1", id).Order("date_of_practice ASC").Select()
+	stmt, err := e.db.Prepare(`SELECT
+		p.id,
+		k.name AS kind_name,
+		p.topic,
+		p.date_of_practice
+	FROM
+		practices AS p
+	LEFT JOIN
+		kinds AS k ON k.id = p.kind_id
+	ORDER BY
+		date_of_practice
+	WHERE 
+	    p.company_id = $1`)
 	if err != nil {
-		log.Println("GetCompanyPractices: ", err)
-		return practices, fmt.Errorf("GetCompanyPractices: %s", err)
+		log.Println("GetPracticeCompany e.db.Prepare ", err)
+		return []Practice{}, err
 	}
-	return
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Println("GetPracticeCompany stmt.Query ", err)
+		return []Practice{}, err
+	}
+	practices, err := scanPractices(rows, "company")
+	return practices, err
 }
 
 // CreatePractice - create new practice
-func (e *Edb) CreatePractice(practice Practice) (err error) {
-	err = e.db.Create(&practice)
+func (e *Edb) CreatePractice(practice Practice) (int64, error) {
+	stmt, err := e.db.Prepare(`INSERT INTO practices(company_id, kind_id, topic, date_of_practice, note) VALUES($1, $2, $3, $4, $5) RETURNING id`)
 	if err != nil {
-		log.Println("CreatePractice: ", err)
-		return fmt.Errorf("CreatePractice: %s", err)
+		log.Println("CreatePractice e.db.Prepare ", err)
+		return 0, err
 	}
-	return
+	err = stmt.QueryRow(i2n(practice.CompanyID), i2n(practice.KindID), s2n(practice.Topic), d2n(practice.DateOfPractice), s2n(practice.Note)).Scan(&practice.ID)
+	return practice.ID, err
 }
 
 // UpdatePractice - save practice changes
-func (e *Edb) UpdatePractice(practice Practice) (err error) {
-	err = e.db.Update(&practice)
+func (e *Edb) UpdatePractice(practice Practice) error {
+	stmt, err := e.db.Prepare(`UPDATE practices SET company_id=$2, kind_id=$3, topic=$4, date_of_practice=$5, note=$6 WHERE id=$1`)
 	if err != nil {
-		log.Println("UpdatePractice e.db.Update: ", err)
-		return fmt.Errorf("UpdatePractice e.db.Update: %s", err)
+		log.Println("UpdatePractice e.db.Prepare ", err)
+		return err
 	}
-	return
+	_, err = stmt.Exec(practice.ID, i2n(practice.CompanyID), i2n(practice.KindID), s2n(practice.Topic), d2n(practice.DateOfPractice), s2n(practice.Note))
+	return err
 }
 
 // DeletePractice - delete practice by id
-func (e *Edb) DeletePractice(id int64) (err error) {
+func (e *Edb) DeletePractice(id int64) error {
 	if id == 0 {
-		return
+		return nil
 	}
-	_, err = e.db.Exec("DELETE FROM practices WHERE id=?", id)
+	_, err := e.db.Exec("DELETE FROM practices WHERE id=?", id)
 	if err != nil {
 		log.Println("DeletePractice e.db.Exec: ", err)
 		return fmt.Errorf("DeletePractice e.db.Exec: %s", err)
 	}
-	return
+	return err
 }
 
 func (e *Edb) practiceCreateTable() (err error) {

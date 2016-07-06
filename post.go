@@ -50,25 +50,21 @@ func scanPosts(rows *sql.Rows, opt string) ([]Post, error) {
 				log.Println("scanPosts rows.Scan list ", err)
 				return posts, err
 			}
+			post.Name = n2s(sname)
+			post.GO = n2b(sgo)
+			post.Note = n2s(snote)
 		case "select":
 			err := rows.Scan(&sid, &sname)
 			if err != nil {
 				log.Println("scanPosts rows.Scan select ", err)
 				return posts, err
 			}
-		}
-		post.ID = n2i(sid)
-		switch opt {
-		case "list":
-			post.Name = n2s(sname)
-			post.GO = n2b(sgo)
-			post.Note = n2s(snote)
-		case "select":
 			post.Name = n2s(sname)
 			if len(post.Name) > 40 {
 				post.Name = post.Name[0:40]
 			}
 		}
+		post.ID = n2i(sid)
 		posts = append(posts, post)
 	}
 	err := rows.Err()

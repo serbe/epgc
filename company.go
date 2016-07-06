@@ -21,81 +21,78 @@ type Company struct {
 
 func scanCompany(row *sql.Row) (Company, error) {
 	var (
-		sid        sql.NullInt64
-		sname      sql.NullString
-		saddress   sql.NullString
-		sscopeID   sql.NullInt64
-		snote      sql.NullString
-		semails    sql.NullString
-		sphones    sql.NullString
-		sfaxes     sql.NullString
-		spractices sql.NullString
+		sID        sql.NullInt64
+		sName      sql.NullString
+		sAddress   sql.NullString
+		sScopeID   sql.NullInt64
+		sNote      sql.NullString
+		sEmails    sql.NullString
+		sPhones    sql.NullString
+		sFaxes     sql.NullString
+		sPractices sql.NullString
 		company    Company
 	)
-	err := row.Scan(&sid, &sname, &saddress, &sscopeID, &snote, &semails, &sphones, &sfaxes, &spractices)
+	err := row.Scan(&sID, &sName, &sAddress, &sScopeID, &sNote, &sEmails, &sPhones, &sFaxes, &sPractices)
 	if err != nil {
 		log.Println("scanScope row.Scan ", err)
 		return company, err
 	}
-	company.ID = n2i(sid)
-	company.Name = n2s(sname)
-	company.Address = n2s(saddress)
-	company.ScopeID = n2i(sscopeID)
-	company.Note = n2s(snote)
-	company.Emails = n2emails(semails)
-	company.Phones = n2phones(sphones)
-	company.Faxes = n2faxes(sfaxes)
-	company.Practices = n2practices(spractices)
+	company.ID = n2i(sID)
+	company.Name = n2s(sName)
+	company.Address = n2s(sAddress)
+	company.ScopeID = n2i(sScopeID)
+	company.Note = n2s(sNote)
+	company.Emails = n2emails(sEmails)
+	company.Phones = n2phones(sPhones)
+	company.Faxes = n2faxes(sFaxes)
+	company.Practices = n2practices(sPractices)
 	return company, err
 }
 
 func scanCompanies(rows *sql.Rows, opt string) ([]Company, error) {
-	var (
-		companies []Company
-		err       error
-	)
+	var companies []Company
 	for rows.Next() {
 		var (
-			sid        sql.NullInt64
-			sname      sql.NullString
-			saddress   sql.NullString
-			sscopeID   sql.NullInt64
-			snote      sql.NullString
-			sscope     sql.NullString
-			semails    sql.NullString
-			sphones    sql.NullString
-			sfaxes     sql.NullString
-			spractices sql.NullString
+			sID      sql.NullInt64
+			sName    sql.NullString
+			sAddress sql.NullString
+			// sScopeID   sql.NullInt64
+			// sNote      sql.NullString
+			sScope sql.NullString
+			// sEmails    sql.NullString
+			sPhones    sql.NullString
+			sFaxes     sql.NullString
+			sPractices sql.NullString
 			company    Company
 		)
 		switch opt {
 		case "list":
-			err = rows.Scan(&sid, &sname, &saddress, &sscope, &sphones, &sfaxes, &spractices)
+			err := rows.Scan(&sID, &sName, &sAddress, &sScope, &sPhones, &sFaxes, &sPractices)
+			if err != nil {
+				log.Println("scanCompanies rows.Scan list ", err)
+				return companies, err
+			}
+			company.Name = n2s(sName)
+			company.Address = n2s(sAddress)
+			company.Scope.Name = n2s(sScope)
+			company.Phones = n2phones(sPhones)
+			company.Faxes = n2faxes(sFaxes)
+			company.Practices = n2practices(sPractices)
 		case "select":
-			err = rows.Scan(&sid, &sname)
-		}
-		if err != nil {
-			log.Println("scanCompanies rows.Scan ", err)
-			return companies, err
-		}
-		company.ID = n2i(sid)
-		switch opt {
-		case "list":
-			company.Name = n2s(sname)
-			company.Address = n2s(saddress)
-			company.Scope.Name = n2s(sscope)
-			company.Phones = n2phones(sphones)
-			company.Faxes = n2faxes(sfaxes)
-			company.Practices = n2practices(spractices)
-		case "select":
-			company.Name = n2s(sname)
+			err := rows.Scan(&sID, &sName)
+			if err != nil {
+				log.Println("scanCompanies rows.Scan select ", err)
+				return companies, err
+			}
+			company.Name = n2s(sName)
 			if len(company.Name) > 40 {
 				company.Name = company.Name[0:40]
 			}
 		}
+		company.ID = n2i(sID)
 		companies = append(companies, company)
 	}
-	err = rows.Err()
+	err := rows.Err()
 	if err != nil {
 		log.Println("scanCompanies rows.Err ", err)
 	}
@@ -123,7 +120,7 @@ func (e *Edb) GetCompany(id int64) (Company, error) {
 		LEFT JOIN phones AS p ON c.id = p.company_id AND p.fax = false
 		LEFT JOIN phones AS f ON c.id = f.company_id AND f.fax = true
 		LEFT JOIN practices AS pr ON c.id = pr.company_id
-		GROUP BY c.id, s.name
+		GROUP BY c.id
  		WHERE id = $1`)
 	if err != nil {
 		log.Println("GetCompany e.db.Prepare ", err)

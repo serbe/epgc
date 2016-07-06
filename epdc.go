@@ -29,11 +29,11 @@ func InitDB(dbname string, user string, password string, sslmode string, logsql 
 	}
 	e.db = db
 	e.log = logsql
-	err = e.createTables()
+	err = e.createAllTables()
 	return e, err
 }
 
-func (e *Edb) createTables() error {
+func (e *Edb) createAllTables() error {
 	err := e.trainingCreateTable()
 	if err != nil {
 		return err

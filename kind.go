@@ -46,24 +46,20 @@ func scanKinds(rows *sql.Rows, opt string) ([]Kind, error) {
 				log.Println("scanKinds list rows.Scan ", err)
 				return kinds, err
 			}
+			kind.Name = n2s(sname)
+			kind.Note = n2s(snote)
 		case "select":
 			err := rows.Scan(&sid, &sname)
 			if err != nil {
 				log.Println("scanKinds select rows.Scan ", err)
 				return kinds, err
 			}
-		}
-		kind.ID = n2i(sid)
-		switch opt {
-		case "list":
-			kind.Name = n2s(sname)
-			kind.Note = n2s(snote)
-		case "select":
 			kind.Name = n2s(sname)
 			if len(kind.Name) > 40 {
 				kind.Name = kind.Name[0:40]
 			}
 		}
+		kind.ID = n2i(sid)
 		kinds = append(kinds, kind)
 	}
 	err := rows.Err()

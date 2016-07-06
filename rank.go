@@ -46,24 +46,20 @@ func scanRanks(rows *sql.Rows, opt string) ([]Rank, error) {
 				log.Println("scanRanks rows.Scan list ", err)
 				return ranks, err
 			}
+			rank.Name = n2s(sname)
+			rank.Note = n2s(snote)
 		case "select":
 			err := rows.Scan(&sid, &sname)
 			if err != nil {
 				log.Println("scanRanks rows.Scan select ", err)
 				return ranks, err
 			}
-		}
-		rank.ID = n2i(sid)
-		switch opt {
-		case "list":
-			rank.Name = n2s(sname)
-			rank.Note = n2s(snote)
-		case "select":
 			rank.Name = n2s(sname)
 			if len(rank.Name) > 40 {
 				rank.Name = rank.Name[0:40]
 			}
 		}
+		rank.ID = n2i(sid)
 		ranks = append(ranks, rank)
 	}
 	err := rows.Err()

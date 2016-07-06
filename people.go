@@ -31,85 +31,79 @@ type People struct {
 
 func scanPeople(row *sql.Row) (People, error) {
 	var (
-		sid        sql.NullInt64
-		sname      sql.NullString
-		scompanyID sql.NullInt64
-		spostID    sql.NullInt64
-		spostGOID  sql.NullInt64
-		srankID    sql.NullInt64
-		sbirthday  pq.NullTime
-		snote      sql.NullString
-		semails    sql.NullString
-		sphones    sql.NullString
-		sfaxes     sql.NullString
+		sID        sql.NullInt64
+		sName      sql.NullString
+		sCompanyID sql.NullInt64
+		sPostID    sql.NullInt64
+		sPostGOID  sql.NullInt64
+		sRankID    sql.NullInt64
+		sBirthday  pq.NullTime
+		sNote      sql.NullString
+		sEmails    sql.NullString
+		sPhones    sql.NullString
+		sFaxes     sql.NullString
 		// strainings sql.NullString
 		people People
 	)
-	err := row.Scan(&sid, &sname, &scompanyID, &spostID, &spostGOID, &srankID, &snote, &semails, &sphones, &sfaxes)
+	err := row.Scan(&sID, &sName, &sCompanyID, &sPostID, &sPostGOID, &sRankID, &sBirthday, &sNote, &sEmails, &sPhones, &sFaxes)
 	if err != nil {
 		log.Println("scanPeople row.Scan ", err)
 		return People{}, err
 	}
-	people.ID = n2i(sid)
-	people.Name = n2s(sname)
-	people.CompanyID = n2i(scompanyID)
-	people.PostID = n2i(spostID)
-	people.PostGOID = n2i(spostGOID)
-	people.RankID = n2i(srankID)
-	people.Note = n2s(snote)
-	people.Emails = n2emails(semails)
-	people.Phones = n2phones(sphones)
-	people.Faxes = n2faxes(sfaxes)
+	people.ID = n2i(sID)
+	people.Name = n2s(sName)
+	people.CompanyID = n2i(sCompanyID)
+	people.PostID = n2i(sPostID)
+	people.PostGOID = n2i(sPostGOID)
+	people.RankID = n2i(sRankID)
+	people.Birthday = n2d(sBirthday)
+	people.Note = n2s(sNote)
+	people.Emails = n2emails(sEmails)
+	people.Phones = n2phones(sPhones)
+	people.Faxes = n2faxes(sFaxes)
 	// people.Practices = n2practices(spractices)
 	return people, nil
 }
 
 func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
-	var (
-		peoples []People
-		err     error
-	)
+	var peoples []People
 	for rows.Next() {
 		var (
-			sid          sql.NullInt64
-			sname        sql.NullString
+			sID          sql.NullInt64
+			sName        sql.NullString
 			scompanyName sql.NullString
 			spostName    sql.NullString
-			sphones      sql.NullString
-			sfaxes       sql.NullString
+			sPhones      sql.NullString
+			sFaxes       sql.NullString
 			people       People
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sid, &sname, &scompanyName, &spostName, &sphones, &sfaxes)
+			err := rows.Scan(&sID, &sName, &scompanyName, &spostName, &sPhones, &sFaxes)
 			if err != nil {
 				log.Println("scanPeople rows.Scan list ", err)
 				return peoples, err
 			}
+			people.Name = n2s(sName)
+			people.Company.Name = n2s(scompanyName)
+			people.Post.Name = n2s(spostName)
+			people.Phones = n2phones(sPhones)
+			people.Faxes = n2faxes(sFaxes)
 		case "select":
-			err := rows.Scan(&sid, &sname)
+			err := rows.Scan(&sID, &sName)
 			if err != nil {
 				log.Println("scanPeople rows.Scan select ", err)
 				return peoples, err
 			}
-		}
-		people.ID = n2i(sid)
-		switch opt {
-		case "list":
-			people.Name = n2s(sname)
-			people.Company.Name = n2s(scompanyName)
-			people.Post.Name = n2s(spostName)
-			people.Phones = n2phones(sphones)
-			people.Faxes = n2faxes(sfaxes)
-		case "select":
-			people.Name = n2s(sname)
+			people.Name = n2s(sName)
 			if len(people.Name) > 40 {
 				people.Name = people.Name[0:40]
 			}
 		}
+		people.ID = n2i(sID)
 		peoples = append(peoples, people)
 	}
-	err = rows.Err()
+	err := rows.Err()
 	if err != nil {
 		log.Println("scanPeoples rows.Err ", err)
 	}

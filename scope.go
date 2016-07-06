@@ -46,24 +46,20 @@ func scanScopes(rows *sql.Rows, opt string) ([]Scope, error) {
 				log.Println("scanScopes rows.Scan list ", err)
 				return []Scope{}, err
 			}
+			scope.Name = n2s(sname)
+			scope.Note = n2s(snote)
 		case "select":
 			err := rows.Scan(&sid, &sname)
 			if err != nil {
 				log.Println("scanScopes rows.Scan select ", err)
 				return []Scope{}, err
 			}
-		}
-		scope.ID = n2i(sid)
-		switch opt {
-		case "list":
-			scope.Name = n2s(sname)
-			scope.Note = n2s(snote)
-		case "select":
 			scope.Name = n2s(sname)
 			if len(scope.Name) > 40 {
 				scope.Name = scope.Name[0:40]
 			}
 		}
+		scope.ID = n2i(sid)
 		scopes = append(scopes, scope)
 	}
 	err := rows.Err()

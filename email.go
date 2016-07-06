@@ -48,23 +48,19 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 				log.Println("scanEmails rows.Scan ", err)
 				return emails, err
 			}
+			email.Email = n2s(semail)
 		case "select":
 			err := rows.Scan(&sid, &semail)
 			if err != nil {
 				log.Println("scanEmails rows.Scan ", err)
 				return emails, err
 			}
-		}
-		email.ID = n2i(sid)
-		switch opt {
-		case "list":
-			email.Email = n2s(semail)
-		case "select":
 			email.Email = n2s(semail)
 			if len(email.Email) > 40 {
 				email.Email = email.Email[0:40]
 			}
 		}
+		email.ID = n2i(sid)
 		emails = append(emails, email)
 	}
 	err := rows.Err()

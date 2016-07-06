@@ -65,6 +65,10 @@ func n2b(val sql.NullBool) bool {
 	return val.Bool
 }
 
+func n2d(val pq.NullTime) time.Time {
+	return val.Time
+}
+
 func n2emails(emails sql.NullString) []Email {
 	var (
 		e  string
@@ -149,12 +153,12 @@ func n2practices(practices sql.NullString) []Practice {
 	return pp
 }
 
-func toInt(b bool) int {
-	if b {
-		return 1
-	}
-	return 0
-}
+// func toInt(b bool) int {
+// 	if b {
+// 		return 1
+// 	}
+// 	return 0
+// }
 
 func int64InSlice(a int64, list []int64) bool {
 	for _, b := range list {
