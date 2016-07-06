@@ -149,7 +149,7 @@ func (e *Edb) CreatePhone(phone Phone) (int64, error) {
 		log.Println("CreatePhone e.db.Prepare ", err)
 		return 0, err
 	}
-	err = stmt.QueryRow(i2n(phone.CompanyID), i2n(phone.PeopleID), i2n(phone.Phone), b2n(phone.Fax)).Scan(&phone.ID)
+	err = stmt.QueryRow(i2n(phone.CompanyID), i2n(phone.PeopleID), i2n(phone.Phone), phone.Fax).Scan(&phone.ID)
 	if err != nil {
 		log.Println("CreatePhone db.QueryRow ", err)
 		return 0, err

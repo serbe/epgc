@@ -86,7 +86,7 @@ func (e *Edb) GetPost(id int64) (Post, error) {
 
 // GetPostList - get all post for list
 func (e *Edb) GetPostList() ([]Post, error) {
-	rows, err := e.db.Query("SELECT id,name,go,note FROM posts WHERE ORDER BY name ASC")
+	rows, err := e.db.Query("SELECT id,name,go,note FROM posts ORDER BY name ASC")
 	if err != nil {
 		log.Println("GetPostList e.db.Query ", err)
 		return []Post{}, err
@@ -113,7 +113,7 @@ func (e *Edb) CreatePost(post Post) (int64, error) {
 		log.Println("CreatePost e.db.Prepare ", err)
 		return 0, err
 	}
-	err = stmt.QueryRow(s2n(post.Name), b2n(post.GO), s2n(post.Note)).Scan(&post.ID)
+	err = stmt.QueryRow(s2n(post.Name), post.GO, s2n(post.Note)).Scan(&post.ID)
 	if err != nil {
 		log.Println("CreatePost db.QueryRow ", err)
 	}

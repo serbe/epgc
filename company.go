@@ -120,8 +120,8 @@ func (e *Edb) GetCompany(id int64) (Company, error) {
 		LEFT JOIN phones AS p ON c.id = p.company_id AND p.fax = false
 		LEFT JOIN phones AS f ON c.id = f.company_id AND f.fax = true
 		LEFT JOIN practices AS pr ON c.id = pr.company_id
-		GROUP BY c.id
- 		WHERE id = $1`)
+ 		WHERE c.id = $1
+		GROUP BY c.id`)
 	if err != nil {
 		log.Println("GetCompany e.db.Prepare ", err)
 		return Company{}, err

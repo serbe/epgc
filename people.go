@@ -132,8 +132,8 @@ func (e *Edb) GetPeople(id int64) (People, error) {
 	LEFT JOIN emails AS e ON p.id = e.people_id
 	LEFT JOIN phones AS ph ON p.id = ph.people_id AND ph.fax = false
 	LEFT JOIN phones AS f ON p.id = f.people_id AND f.fax = true
-	GROUP BY p.id
-	WHERE id = $1`)
+	WHERE p.id = $1
+	GROUP BY p.id`)
 	if err != nil {
 		log.Println("GetPeople e.db.Prepare ", err)
 		return People{}, err
