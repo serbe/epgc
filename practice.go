@@ -20,6 +20,8 @@ type Practice struct {
 	DateOfPractice time.Time `sql:"date_of_practice, null" json:"date-of-practice"`
 	DateStr        string    `sql:"-" json:"date-str"`
 	Note           string    `sql:"note, null" json:"note"`
+	CreatedAt      time.Time `sql:"created_at" json:"created_at"`
+	UpdatedAt      time.Time `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPractice(row *sql.Row) (Practice, error) {
@@ -213,7 +215,7 @@ func (e *Edb) DeletePractice(id int64) error {
 }
 
 func (e *Edb) practiceCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS practices (id bigserial primary key, company_id bigint, kind_id bigint, topic text, date_of_practice date, note text)`
+	str := `CREATE TABLE IF NOT EXISTS practices (id bigserial primary key, company_id bigint, kind_id bigint, topic text, date_of_practice date, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("practiceCreateTable e.db.Exec: ", err)

@@ -3,15 +3,18 @@ package epgc
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 // Phone - struct for phone
 type Phone struct {
-	ID        int64 `sql:"id" json:"id"`
-	CompanyID int64 `sql:"company_id, pk, null" json:"company-id"`
-	PeopleID  int64 `sql:"people_id, pk, null" json:"people-id"`
-	Phone     int64 `sql:"phone, null" json:"phone"`
-	Fax       bool  `sql:"fax, null" json:"fax"`
+	ID        int64     `sql:"id" json:"id"`
+	CompanyID int64     `sql:"company_id, pk, null" json:"company-id"`
+	PeopleID  int64     `sql:"people_id, pk, null" json:"people-id"`
+	Phone     int64     `sql:"phone, null" json:"phone"`
+	Fax       bool      `sql:"fax, null" json:"fax"`
+	CreatedAt time.Time `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPhone(row *sql.Row) (Phone, error) {
@@ -301,7 +304,7 @@ func (e *Edb) DeleteAllPeoplePhones(id int64) error {
 }
 
 func (e *Edb) phoneCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS phones (id bigserial primary key, people_id bigint, company_id bigint, phone bigint, fax bool NOT NULL DEFAULT false)`
+	str := `CREATE TABLE IF NOT EXISTS phones (id bigserial primary key, people_id bigint, company_id bigint, phone bigint, fax bool NOT NULL DEFAULT false, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("phoneCreateTable e.db.Exec ", err)

@@ -27,6 +27,8 @@ type People struct {
 	Phones    []Phone    `sql:"-"`
 	Faxes     []Phone    `sql:"-"`
 	Trainings []Training `sql:"-"`
+	CreatedAt time.Time  `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time  `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPeople(row *sql.Row) (People, error) {
@@ -241,7 +243,7 @@ func (e *Edb) DeletePeople(id int64) error {
 }
 
 func (e *Edb) peopleCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS peoples (id bigserial primary key, name text, company_id bigint, post_id bigint, post_go_id bigint, rank_id bigint, birthday date, note text)`
+	str := `CREATE TABLE IF NOT EXISTS peoples (id bigserial primary key, name text, company_id bigint, post_id bigint, post_go_id bigint, rank_id bigint, birthday date, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("peopleCreateTable ", err)

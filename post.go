@@ -3,14 +3,17 @@ package epgc
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 // Post - struct for post
 type Post struct {
-	ID   int64  `sql:"id" json:"id"`
-	Name string `sql:"name" json:"name"`
-	GO   bool   `sql:"go" json:"go"`
-	Note string `sql:"note, null" json:"note"`
+	ID        int64     `sql:"id" json:"id"`
+	Name      string    `sql:"name" json:"name"`
+	GO        bool      `sql:"go" json:"go"`
+	Note      string    `sql:"note, null" json:"note"`
+	CreatedAt time.Time `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPost(row *sql.Row) (Post, error) {
@@ -147,7 +150,7 @@ func (e *Edb) DeletePost(id int64) error {
 }
 
 func (e *Edb) postCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS posts (id BIGSERIAL PRIMARY KEY, name TEXT, go BOOL NOT NULL DEFAULT FALSE, note TEXT, UNIQUE (name, go))`
+	str := `CREATE TABLE IF NOT EXISTS posts (id BIGSERIAL PRIMARY KEY, name TEXT, go BOOL NOT NULL DEFAULT FALSE, note TEXT, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone, UNIQUE (name, go))`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("postCreateTable e.db.Exec ", err)

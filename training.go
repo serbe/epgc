@@ -16,6 +16,8 @@ type Training struct {
 	StartStr  string    `sql:"-" json:"start-str"`
 	EndStr    string    `sql:"-" json:"end-str"`
 	Note      string    `sql:"note, null" json:"note"`
+	CreatedAt time.Time `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
 }
 
 func scanTraining(row *sql.Row) (Training, error) {
@@ -155,7 +157,7 @@ func (e *Edb) DeleteTraining(id int64) error {
 }
 
 func (e *Edb) trainingCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS trainings (id bigserial primary key, start_date date, end_date date, note text)`
+	str := `CREATE TABLE IF NOT EXISTS trainings (id bigserial primary key, start_date date, end_date date, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("trainingCreateTable ", err)

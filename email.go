@@ -3,14 +3,17 @@ package epgc
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 // Email - struct for email
 type Email struct {
-	ID        int64  `sql:"id" json:"id"`
-	CompanyID int64  `sql:"company_id, pk, null" json:"company-id"`
-	PeopleID  int64  `sql:"people_id, pk, null" json:"people-id"`
-	Email     string `sql:"email, null" json:"email"`
+	ID        int64     `sql:"id" json:"id"`
+	CompanyID int64     `sql:"company_id, pk, null" json:"company-id"`
+	PeopleID  int64     `sql:"people_id, pk, null" json:"people-id"`
+	Email     string    `sql:"email, null" json:"email"`
+	CreatedAt time.Time `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
 }
 
 func scanEmail(row *sql.Row) (Email, error) {
@@ -226,7 +229,7 @@ func (e *Edb) DeletePeopleEmails(id int64) error {
 }
 
 func (e *Edb) emailCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS emails (id bigserial primary key, company_id bigint, people_id bigint, email text)`
+	str := `CREATE TABLE IF NOT EXISTS emails (id bigserial primary key, company_id bigint, people_id bigint, email text, created_at timestamp without time zone, updated_at timestamp without time zone)`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("emailCreateTable ", err)

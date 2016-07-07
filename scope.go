@@ -3,13 +3,16 @@ package epgc
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 // Scope - struct for scope
 type Scope struct {
-	ID   int64  `sql:"id" json:"id"`
-	Name string `sql:"name" json:"name"`
-	Note string `sql:"note, null" json:"note"`
+	ID        int64     `sql:"id" json:"id"`
+	Name      string    `sql:"name" json:"name"`
+	Note      string    `sql:"note, null" json:"note"`
+	CreatedAt time.Time `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
 }
 
 func scanScope(row *sql.Row) (Scope, error) {
@@ -142,7 +145,7 @@ func (e *Edb) DeleteScope(id int64) error {
 }
 
 func (e *Edb) scopeCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS scopes (id bigserial primary key, name text, note text)`
+	str := `CREATE TABLE IF NOT EXISTS scopes (id bigserial primary key, name text, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("scopeCreateTable e.db.Exec ", err)

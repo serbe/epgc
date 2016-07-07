@@ -3,6 +3,7 @@ package epgc
 import (
 	"database/sql"
 	"log"
+	"time"
 )
 
 // Company is struct for company
@@ -17,6 +18,8 @@ type Company struct {
 	Phones    []Phone    `sql:"-"`
 	Faxes     []Phone    `sql:"-"`
 	Practices []Practice `sql:"-"`
+	CreatedAt time.Time  `sql:"created_at" json:"created_at"`
+	UpdatedAt time.Time  `sql:"updated_at" json:"updated_at"`
 }
 
 func scanCompany(row *sql.Row) (Company, error) {
@@ -223,7 +226,7 @@ func (e *Edb) DeleteCompany(id int64) error {
 }
 
 func (e *Edb) companyCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS companies (id BIGSERIAL PRIMARY KEY, name TEXT, address TEXT, scope_id BIGINT, note TEXT, UNIQUE(name, scope_id))`
+	str := `CREATE TABLE IF NOT EXISTS companies (id BIGSERIAL PRIMARY KEY, name TEXT, address TEXT, scope_id BIGINT, note TEXT, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone, UNIQUE(name, scope_id))`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("companyCreateTable e.db.Exec ", err)
