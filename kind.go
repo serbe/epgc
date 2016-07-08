@@ -77,14 +77,14 @@ func (e *Edb) GetKind(id int64) (Kind, error) {
 	if id == 0 {
 		return Kind{}, nil
 	}
-	row := e.db.QueryRow("SELECT id,name,note FROM kinds WHERE id = $1", id)
+	row := e.db.QueryRow(`SELECT id, name, note FROM kinds WHERE id = $1`, id)
 	kind, err := scanKind(row)
 	return kind, err
 }
 
 // GetKindList - get all kind for list
 func (e *Edb) GetKindList() ([]Kind, error) {
-	rows, err := e.db.Query("SELECT id,name,note FROM kinds ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name, note FROM kinds ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetKindList e.db.Query ", err)
 		return []Kind{}, err
@@ -95,7 +95,7 @@ func (e *Edb) GetKindList() ([]Kind, error) {
 
 // GetKindSelect - get all kind for select
 func (e *Edb) GetKindSelect() ([]Kind, error) {
-	rows, err := e.db.Query("SELECT id,name FROM kinds ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name FROM kinds ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetKindSelect e.db.Query ", err)
 		return []Kind{}, err
@@ -106,7 +106,7 @@ func (e *Edb) GetKindSelect() ([]Kind, error) {
 
 // CreateKind - create new kind
 func (e *Edb) CreateKind(kind Kind) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO kinds(name, note) VALUES($1, $2) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO kinds(name, note, created_at) VALUES($1, $2, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreateKind e.db.Prepare ", err)
 		return 0, err
@@ -121,7 +121,7 @@ func (e *Edb) CreateKind(kind Kind) (int64, error) {
 
 // UpdateKind - save kind changes
 func (e *Edb) UpdateKind(s Kind) error {
-	stmt, err := e.db.Prepare("UPDATE kinds SET name=$2,note=$3 WHERE id = $1")
+	stmt, err := e.db.Prepare(`UPDATE kinds SET name=$2, note=$3, updated_at = now() WHERE id = $1`)
 	if err != nil {
 		log.Println("UpdateKind e.db.Prepare ", err)
 		return err
@@ -138,7 +138,7 @@ func (e *Edb) DeleteKind(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM kinds WHERE id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM kinds WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeleteKind e.db.Exec ", err)
 	}

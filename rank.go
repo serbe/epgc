@@ -77,14 +77,14 @@ func (e *Edb) GetRank(id int64) (Rank, error) {
 	if id == 0 {
 		return Rank{}, nil
 	}
-	row := e.db.QueryRow("SELECT id,name,note FROM ranks WHERE id = $1", id)
+	row := e.db.QueryRow(`SELECT id, name, note FROM ranks WHERE id = $1`, id)
 	rank, err := scanRank(row)
 	return rank, err
 }
 
 // GetRankList - get all rank for list
 func (e *Edb) GetRankList() ([]Rank, error) {
-	rows, err := e.db.Query("SELECT id,name,note FROM ranks ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name, note FROM ranks ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetRankList e.db.Query ", err)
 		return []Rank{}, err
@@ -95,7 +95,7 @@ func (e *Edb) GetRankList() ([]Rank, error) {
 
 // GetRankSelect - get all rank for select
 func (e *Edb) GetRankSelect() ([]Rank, error) {
-	rows, err := e.db.Query("SELECT id,name FROM ranks ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name FROM ranks ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetRankSelect e.db.Query ", err)
 		return []Rank{}, err
@@ -106,7 +106,7 @@ func (e *Edb) GetRankSelect() ([]Rank, error) {
 
 // CreateRank - create new rank
 func (e *Edb) CreateRank(rank Rank) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO ranks(name, note) VALUES($1, $2) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO ranks(name, note, created_at) VALUES($1, $2, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreateRank e.db.Prepare ", err)
 		return 0, err
@@ -120,7 +120,7 @@ func (e *Edb) CreateRank(rank Rank) (int64, error) {
 
 // UpdateRank - save rank changes
 func (e *Edb) UpdateRank(s Rank) error {
-	stmt, err := e.db.Prepare("UPDATE ranks SET name=$2,note=$3 WHERE id = $1")
+	stmt, err := e.db.Prepare(`UPDATE ranks SET name=$2, note=$3, updated_at = now() WHERE id = $1`)
 	if err != nil {
 		log.Println("UpdateRank e.db.Prepare ", err)
 		return err
@@ -137,7 +137,7 @@ func (e *Edb) DeleteRank(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM ranks WHERE id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM ranks WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeleteRank e.db.Exec ", err)
 	}

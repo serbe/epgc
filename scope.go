@@ -77,14 +77,14 @@ func (e *Edb) GetScope(id int64) (Scope, error) {
 	if id == 0 {
 		return Scope{}, nil
 	}
-	row := e.db.QueryRow("SELECT id,name,note FROM scopes WHERE id = $1", id)
+	row := e.db.QueryRow(`SELECT id, name, note FROM scopes WHERE id = $1`, id)
 	scope, err := scanScope(row)
 	return scope, err
 }
 
 // GetScopeList - get all scope for list
 func (e *Edb) GetScopeList() ([]Scope, error) {
-	rows, err := e.db.Query("SELECT id,name,note FROM scopes ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name, note FROM scopes ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetScopeList e.db.Query ", err)
 		return []Scope{}, err
@@ -95,7 +95,7 @@ func (e *Edb) GetScopeList() ([]Scope, error) {
 
 // GetScopeSelect - get all scope for select
 func (e *Edb) GetScopeSelect() ([]Scope, error) {
-	rows, err := e.db.Query("SELECT id,name FROM scopes ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name FROM scopes ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetScopeSelect e.db.Query ", err)
 		return []Scope{}, err
@@ -106,7 +106,7 @@ func (e *Edb) GetScopeSelect() ([]Scope, error) {
 
 // CreateScope - create new scope
 func (e *Edb) CreateScope(scope Scope) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO scopes(name, note) VALUES($1, $2) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO scopes(name, note, created_at) VALUES($1, $2, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreateScope e.db.Prepare ", err)
 		return 0, err
@@ -120,7 +120,7 @@ func (e *Edb) CreateScope(scope Scope) (int64, error) {
 
 // UpdateScope - save scope changes
 func (e *Edb) UpdateScope(s Scope) error {
-	stmt, err := e.db.Prepare("UPDATE scopes SET name=$2,note=$3 WHERE id = $1")
+	stmt, err := e.db.Prepare(`UPDATE scopes SET name=$2, note=$3, updated_at = now() WHERE id = $1`)
 	if err != nil {
 		log.Println("UpdateScope e.db.Prepare ", err)
 		return err
@@ -137,7 +137,7 @@ func (e *Edb) DeleteScope(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM scopes WHERE id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM scopes WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeleteScope e.db.Exec ", err)
 	}

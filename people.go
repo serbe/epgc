@@ -189,7 +189,7 @@ func (e *Edb) GetPeopleSelect() ([]People, error) {
 
 // CreatePeople - create new people
 func (e *Edb) CreatePeople(people People) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO peoples(name, company_id, post_id, post_go_id, rank_id, birthday, note) VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO peoples(name, company_id, post_id, post_go_id, rank_id, birthday, note, created_at) VALUES($1, $2, $3, $4, $5, $6, $7, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreatePeople e.db.Prepare ", err)
 		return 0, err
@@ -208,7 +208,7 @@ func (e *Edb) CreatePeople(people People) (int64, error) {
 
 // UpdatePeople - save people changes
 func (e *Edb) UpdatePeople(people People) error {
-	stmt, err := e.db.Prepare(`UPDATE peoples SET name=$2, company_id=$3, post_id=$4, post_go_id=$5, rank_id=$6, birthday=$7, note=$8 WHERE id = $1`)
+	stmt, err := e.db.Prepare(`UPDATE peoples SET name=$2, company_id=$3, post_id=$4, post_go_id=$5, rank_id=$6, birthday=$7, note=$8, updated_at = now() WHERE id = $1`)
 	if err != nil {
 		log.Println("UpdatePeople e.db.Prepare ", err)
 		return err
@@ -235,7 +235,7 @@ func (e *Edb) DeletePeople(id int64) error {
 		log.Println("DeletePeople DeleteAllPeoplePhones ", err)
 		return err
 	}
-	e.db.Exec("DELETE FROM peoples WHERE id = $1", id)
+	e.db.Exec(`DELETE FROM peoples WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeletePeople e.db.Exec ", err)
 	}

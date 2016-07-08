@@ -82,14 +82,14 @@ func (e *Edb) GetPost(id int64) (Post, error) {
 	if id == 0 {
 		return Post{}, nil
 	}
-	row := e.db.QueryRow("SELECT id,name,go,note FROM posts WHERE id = $1", id)
+	row := e.db.QueryRow(`SELECT id, name, go, note FROM posts WHERE id = $1`, id)
 	post, err := scanPost(row)
 	return post, err
 }
 
 // GetPostList - get all post for list
 func (e *Edb) GetPostList() ([]Post, error) {
-	rows, err := e.db.Query("SELECT id,name,go,note FROM posts ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, name, go, note FROM posts ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetPostList e.db.Query ", err)
 		return []Post{}, err
@@ -100,7 +100,7 @@ func (e *Edb) GetPostList() ([]Post, error) {
 
 // GetPostSelect - get all post for select
 func (e *Edb) GetPostSelect(g bool) ([]Post, error) {
-	rows, err := e.db.Query("SELECT id,name FROM posts WHERE go=$1 ORDER BY name ASC", g)
+	rows, err := e.db.Query(`SELECT id, name FROM posts WHERE go=$1 ORDER BY name ASC`, g)
 	if err != nil {
 		log.Println("GetPostSelect e.db.Query ", err)
 		return []Post{}, err
@@ -111,7 +111,7 @@ func (e *Edb) GetPostSelect(g bool) ([]Post, error) {
 
 // CreatePost - create new post
 func (e *Edb) CreatePost(post Post) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO posts(name, go, note) VALUES($1, $2, $3) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO posts(name, go, note, created_at) VALUES($1, $2, $3, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreatePost e.db.Prepare ", err)
 		return 0, err
@@ -125,7 +125,7 @@ func (e *Edb) CreatePost(post Post) (int64, error) {
 
 // UpdatePost - save post changes
 func (e *Edb) UpdatePost(s Post) error {
-	stmt, err := e.db.Prepare("UPDATE posts SET name=$2,note=$3 WHERE id = $1")
+	stmt, err := e.db.Prepare(`UPDATE posts SET name=$2, note=$3, updated_at = now() WHERE id = $1`)
 	if err != nil {
 		log.Println("UpdatePost e.db.Prepare ", err)
 		return err
@@ -142,7 +142,7 @@ func (e *Edb) DeletePost(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM posts WHERE id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM posts WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeletePost e.db.Exec ", err)
 	}

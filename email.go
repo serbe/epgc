@@ -78,7 +78,7 @@ func (e *Edb) GetEmail(id int64) (Email, error) {
 	if id == 0 {
 		return Email{}, nil
 	}
-	stmt, err := e.db.Prepare(" SELECT id,company_id,people_id,email FROM emails WHERE id = $1")
+	stmt, err := e.db.Prepare(`SELECT id, company_id, people_id, email FROM emails WHERE id = $1`)
 	if err != nil {
 		log.Println("GetEmail e.db.Prepare", err)
 		return Email{}, err
@@ -90,7 +90,7 @@ func (e *Edb) GetEmail(id int64) (Email, error) {
 
 // GetEmailList - get all emails for list
 func (e *Edb) GetEmailList() ([]Email, error) {
-	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC")
+	rows, err := e.db.Query(`SELECT id, email FROM emails ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetEmailList e.db.Query ", err)
 		return []Email{}, err
@@ -104,7 +104,7 @@ func (e *Edb) GetCompanyEmails(id int64) ([]Email, error) {
 	if id == 0 {
 		return []Email{}, nil
 	}
-	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC WHERE company_id = $1", id)
+	rows, err := e.db.Query(`SELECT id, email FROM emails ORDER BY name ASC WHERE company_id = $1`, id)
 	if err != nil {
 		log.Println("GetCompanyEmails e.db.Query ", err)
 		return []Email{}, err
@@ -118,7 +118,7 @@ func (e *Edb) GetPeopleEmails(id int64) ([]Email, error) {
 	if id == 0 {
 		return []Email{}, nil
 	}
-	rows, err := e.db.Query("SELECT id, email FROM emails ORDER BY name ASC WHERE people_id = $1", id)
+	rows, err := e.db.Query(`SELECT id, email FROM emails ORDER BY name ASC WHERE people_id = $1`, id)
 	if err != nil {
 		log.Println("GetPeopleEmails e.db.Query ", err)
 		return []Email{}, err
@@ -129,7 +129,7 @@ func (e *Edb) GetPeopleEmails(id int64) ([]Email, error) {
 
 // CreateEmail - create new email
 func (e *Edb) CreateEmail(email Email) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO emails(company_id, people_id, email) VALUES($1, $2, $3) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO emails(company_id, people_id, email, created_at) VALUES($1, $2, $3, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreateEmail e.db.Prepare ", err)
 		return 0, err
@@ -180,7 +180,7 @@ func (e *Edb) CreatePeopleEmails(people People) error {
 
 // UpdateEmail - save email changes
 func (e *Edb) UpdateEmail(email Email) error {
-	stmt, err := e.db.Prepare(`UPDATE emails SET company_id=$2,people_id=$3,email=$4 WHERE id=$1`)
+	stmt, err := e.db.Prepare(`UPDATE emails SET company_id=$2, people_id=$3, email=$4, updated_at = now() WHERE id=$1`)
 	if err != nil {
 		log.Println("UpdateEmail e.db.Prepare ", err)
 		return err
@@ -197,7 +197,7 @@ func (e *Edb) DeleteEmail(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM emails WHERE id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM emails WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeleteEmail ", err)
 	}
@@ -209,7 +209,7 @@ func (e *Edb) DeleteCompanyEmails(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM emails WHERE company_id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM emails WHERE company_id = $1`, id)
 	if err != nil {
 		log.Println("DeleteCompanyEmails ", err)
 	}
@@ -221,7 +221,7 @@ func (e *Edb) DeletePeopleEmails(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM emails WHERE people_id = $1", id)
+	_, err := e.db.Exec(`DELETE FROM emails WHERE people_id = $1`, id)
 	if err != nil {
 		log.Println("DeletePeopleEmails ", err)
 	}

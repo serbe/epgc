@@ -124,9 +124,9 @@ func (e *Edb) GetTrainingList() ([]Training, error) {
 
 // CreateTraining - create new training
 func (e *Edb) CreateTraining(training Training) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO trainings(start_date, end_date, note) VALUES($1, $2, $3) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO trainings(start_date, end_date, note, created_at) VALUES($1, $2, $3, now()) RETURNING id`)
 	if err != nil {
-		log.Println("CreateTraining  e.db.Prepare ", err)
+		log.Println("CreateTraining e.db.Prepare ", err)
 		return 0, err
 	}
 	err = stmt.QueryRow(d2n(training.StartDate), d2n(training.EndDate), s2n(training.Note)).Scan(&training.ID)
@@ -135,7 +135,7 @@ func (e *Edb) CreateTraining(training Training) (int64, error) {
 
 // UpdateTraining - save changes to training
 func (e *Edb) UpdateTraining(training Training) error {
-	stmt, err := e.db.Prepare(`UPDATE trainings SET start_date = $2, end_date = $3, note = $4 WHERE id = $1`)
+	stmt, err := e.db.Prepare(`UPDATE trainings SET start_date = $2, end_date = $3, note = $4, updated_at = now() WHERE id = $1`)
 	if err != nil {
 		log.Println("UpdateTraining e.db.Prepare ", err)
 		return err
@@ -149,7 +149,7 @@ func (e *Edb) DeleteTraining(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE * FROM trainings WHERE id = $1", id)
+	_, err := e.db.Exec(`DELETE * FROM trainings WHERE id = $1`, id)
 	if err != nil {
 		log.Println("DeleteTraining ", err)
 	}
