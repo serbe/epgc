@@ -19,41 +19,56 @@ type Phone struct {
 
 func scanPhone(row *sql.Row) (Phone, error) {
 	var (
-		sid        sql.NullInt64
-		scompanyID sql.NullInt64
-		speopleID  sql.NullInt64
-		sphone     sql.NullInt64
-		sfax       sql.NullBool
+		sID        sql.NullInt64
+		sCompanyID sql.NullInt64
+		sPeopleID  sql.NullInt64
+		sPhone     sql.NullInt64
+		sFax       sql.NullBool
 		phone      Phone
 	)
-	err := row.Scan(&sid, &scompanyID, &speopleID, &sphone, &sfax)
+	err := row.Scan(&sID, &sCompanyID, &sPeopleID, &sPhone, &sFax)
 	if err != nil {
 		log.Println("scanPhone row.Scan ", err)
 		return phone, err
 	}
-	phone.ID = n2i(sid)
-	phone.CompanyID = n2i(scompanyID)
-	phone.PeopleID = n2i(speopleID)
-	phone.Phone = n2i(sphone)
-	phone.Fax = n2b(sfax)
+	phone.ID = n2i(sID)
+	phone.CompanyID = n2i(sCompanyID)
+	phone.PeopleID = n2i(sPeopleID)
+	phone.Phone = n2i(sPhone)
+	phone.Fax = n2b(sFax)
 	return phone, nil
 }
 
-func scanPhones(rows *sql.Rows) ([]Phone, error) {
+func scanPhones(rows *sql.Rows, opt string) ([]Phone, error) {
 	var phones []Phone
 	for rows.Next() {
 		var (
-			sid    sql.NullInt64
-			sphone sql.NullInt64
-			phone  Phone
+			sID        sql.NullInt64
+			sCompanyID sql.NullInt64
+			sPeopleID  sql.NullInt64
+			sPhone     sql.NullInt64
+			sFax       sql.NullBool
+			phone      Phone
 		)
-		err := rows.Scan(&sid, &sphone)
-		if err != nil {
-			log.Println("scanPhones rows.Scan ", err)
-			return phones, err
+		switch opt {
+		case "list":
+			err := rows.Scan(&sID, &sCompanyID, &sPeopleID, &sPhone, &sFax)
+			if err != nil {
+				log.Println("scanPhones rows.Scan list ", err)
+				return phones, err
+			}
+			phone.CompanyID = n2i(sCompanyID)
+			phone.PeopleID = n2i(sPeopleID)
+			phone.Fax = n2b(sFax)
+		case "short":
+			err := rows.Scan(&sID, &sPhone)
+			if err != nil {
+				log.Println("scanPhones rows.Scan short ", err)
+				return phones, err
+			}
 		}
-		phone.ID = n2i(sid)
-		phone.Phone = n2i(sphone)
+		phone.ID = n2i(sID)
+		phone.Phone = n2i(sPhone)
 		phones = append(phones, phone)
 	}
 	err := rows.Err()
@@ -68,7 +83,7 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 	if id == 0 {
 		return Phone{}, nil
 	}
-	stmt, err := e.db.Prepare("SELECT id,company_id,people_id,phone,fax FROM phones WHERE id = $1")
+	stmt, err := e.db.Prepare("SELECT id, company_id, people_id, phone, fax FROM phones WHERE id = $1")
 	if err != nil {
 		log.Println("GetPhone e.db.Prepare", err)
 		return Phone{}, err
@@ -78,16 +93,16 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 	return phone, nil
 }
 
-// // GetPhoneList - get all phones for list
-// func (e *Edb) GetPhoneList() ([]Phone, error) {
-// 	rows, err := e.db.Query("SELECT id, phone FROM phones ORDER BY name ASC")
-// 	if err != nil {
-// 		log.Println("GetPhoneList e.db.Query ", err)
-// 		return []Phone{}, err
-// 	}
-// 	phones, err := scanPhones(rows, "list")
-// 	return phones, err
-// }
+// GetPhoneList - get all phones for list
+func (e *Edb) GetPhoneList() ([]Phone, error) {
+	rows, err := e.db.Query("SELECT id, company_id, people_id, phone, fax FROM phones ORDER BY phone ASC")
+	if err != nil {
+		log.Println("GetPhoneList e.db.Query ", err)
+		return []Phone{}, err
+	}
+	phones, err := scanPhones(rows, "list")
+	return phones, err
+}
 
 // GetCompanyPhones - get all phones by company id
 func (e *Edb) GetCompanyPhones(id int64, fax bool) ([]Phone, error) {
@@ -99,7 +114,7 @@ func (e *Edb) GetCompanyPhones(id int64, fax bool) ([]Phone, error) {
 		log.Println("GetCompanyPhones e.db.Query ", err)
 		return []Phone{}, err
 	}
-	phones, err := scanPhones(rows)
+	phones, err := scanPhones(rows, "short")
 	return phones, err
 }
 
@@ -113,7 +128,7 @@ func (e *Edb) GetPeoplePhones(id int64, fax bool) ([]Phone, error) {
 		log.Println("GetPeoplePhones e.db.Query ", err)
 		return []Phone{}, err
 	}
-	phones, err := scanPhones(rows)
+	phones, err := scanPhones(rows, "short")
 	return phones, err
 }
 
@@ -127,7 +142,7 @@ func (e *Edb) GetCompanyPhonesAll(id int64, fax bool) ([]Phone, error) {
 		log.Println("GetCompanyPhonesAll e.db.Query ", err)
 		return []Phone{}, nil
 	}
-	phones, err := scanPhones(rows)
+	phones, err := scanPhones(rows, "short")
 	return phones, err
 }
 
@@ -141,7 +156,7 @@ func (e *Edb) GetPeoplePhonesAll(id int64, fax bool) ([]Phone, error) {
 		log.Println("GetPeoplePhonesAll e.db.Query ", err)
 		return []Phone{}, nil
 	}
-	phones, err := scanPhones(rows)
+	phones, err := scanPhones(rows, "short")
 	return phones, err
 }
 
@@ -231,7 +246,7 @@ func (e *Edb) CleanCompanyPhones(company Company, fax bool) error {
 			log.Println("CleanCompanyPhones e.db.Query ", err)
 			return err
 		}
-		companyPhones, err := scanPhones(rows)
+		companyPhones, err := scanPhones(rows, "short")
 		if err != nil {
 			log.Println("CleanCompanyPhones scanPhones ", err)
 			return err
@@ -267,7 +282,7 @@ func (e *Edb) CleanPeoplePhones(people People, fax bool) error {
 			log.Println("CleanPeoplePhones e.db.Query ", err)
 			return err
 		}
-		peoplePhones, err := scanPhones(rows)
+		peoplePhones, err := scanPhones(rows, "short")
 		if err != nil {
 			log.Println("CleanPeoplePhones scanPhones ", err)
 			return err
