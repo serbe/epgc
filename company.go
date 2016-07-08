@@ -178,7 +178,7 @@ func (e *Edb) GetCompanySelect() ([]Company, error) {
 
 // CreateCompany - create new company
 func (e *Edb) CreateCompany(company Company) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO companies(name, address, scope_id, note) VALUES($1, $2, $3, $4) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO companies(name, address, scope_id, note, created_at) VALUES($1, $2, $3, $4, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreateCompany e.db.Prepare ", err)
 		return 0, err
@@ -196,7 +196,7 @@ func (e *Edb) CreateCompany(company Company) (int64, error) {
 
 // UpdateCompany - save company changes
 func (e *Edb) UpdateCompany(company Company) error {
-	stmt, err := e.db.Prepare(`UPDATE companies SET name=$2,address=$3,scope_id=$4,note=$5 WHERE id=$1`)
+	stmt, err := e.db.Prepare(`UPDATE companies SET name=$2, address=$3, scope_id=$4, note=$5, updated_at = now(), updated_at = now() WHERE id=$1`)
 	if err != nil {
 		log.Println("UpdateCompany e.db.Prepare ", err)
 		return err
@@ -218,7 +218,7 @@ func (e *Edb) DeleteCompany(id int64) error {
 		return nil
 	}
 	e.DeleteAllCompanyPhones(id)
-	_, err := e.db.Exec("DELETE FROM companies WHERE id=?", id)
+	_, err := e.db.Exec(`DELETE FROM companies WHERE id=?`, id)
 	if err != nil {
 		log.Println("DeleteCompany e.db.Exec ", err)
 	}
@@ -226,7 +226,7 @@ func (e *Edb) DeleteCompany(id int64) error {
 }
 
 func (e *Edb) companyCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS companies (id BIGSERIAL PRIMARY KEY, name TEXT, address TEXT, scope_id BIGINT, note TEXT, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone, UNIQUE(name, scope_id))`
+	str := `CREATE TABLE IF NOT EXISTS companies (id BIGSERIAL PRIMARY KEY, name TEXT, address TEXT, scope_id BIGINT, note TEXT, created_at timestamp without time zone, updated_at timestamp without time zone, UNIQUE(name, scope_id))`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("companyCreateTable e.db.Exec ", err)
