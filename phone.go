@@ -68,7 +68,7 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 	if id == 0 {
 		return Phone{}, nil
 	}
-	stmt, err := e.db.Prepare(" SELECT id,company_id,people_id,phone,fax FROM phones WHERE id = $1")
+	stmt, err := e.db.Prepare("SELECT id,company_id,people_id,phone,fax FROM phones WHERE id = $1")
 	if err != nil {
 		log.Println("GetPhone e.db.Prepare", err)
 		return Phone{}, err
@@ -147,7 +147,7 @@ func (e *Edb) GetPeoplePhonesAll(id int64, fax bool) ([]Phone, error) {
 
 // CreatePhone - create new phone
 func (e *Edb) CreatePhone(phone Phone) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO phones(company_id, people_id, phone, fax) VALUES($1, $2, $3, $4) RETURNING id`)
+	stmt, err := e.db.Prepare(`INSERT INTO phones(company_id, people_id, phone, fax, created_at) VALUES($1, $2, $3, $4, now()) RETURNING id`)
 	if err != nil {
 		log.Println("CreatePhone e.db.Prepare ", err)
 		return 0, err
@@ -191,7 +191,13 @@ func (e *Edb) CreatePeoplePhones(people People, fax bool) error {
 		log.Println("CreatePeoplePhones CleanPeoplePhones ", err)
 		return err
 	}
-	for _, value := range people.Phones {
+	var allPhones []Phone
+	if fax {
+		allPhones = people.Faxes
+	} else {
+		allPhones = people.Phones
+	}
+	for _, value := range allPhones {
 		phone := Phone{}
 		err = e.db.QueryRow("SELECT id FROM phones WHERE people_id = $1 and phone = $2 and fax = $3 RETURNING id", people.ID, value.Phone, fax).Scan(&phone.ID)
 		if phone.ID == 0 {
