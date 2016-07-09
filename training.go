@@ -78,14 +78,14 @@ func (e *Edb) GetTraining(id int64) (Training, error) {
 	}
 	stmt, err := e.db.Prepare(`SELECT
 		id,
-		start_date
+		start_date,
 		end_date,
 		note
 	FROM
 		trainings
+	WHERE id = $1
 	ORDER BY
-		start_date
-	WHERE id = $1`)
+		start_date`)
 	if err != nil {
 		log.Println("GetTraining e.db.Prepare ", err)
 		return Training{}, err
@@ -99,7 +99,7 @@ func (e *Edb) GetTraining(id int64) (Training, error) {
 func (e *Edb) GetTrainingList() ([]Training, error) {
 	rows, err := e.db.Query(`SELECT
 		id,
-		start_date
+		start_date,
 		end_date,
 		note
 	FROM
