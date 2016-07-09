@@ -90,6 +90,7 @@ func scanPractices(rows *sql.Rows, opt string) ([]Practice, error) {
 		}
 		practice.ID = n2i(sID)
 		practice.DateOfPractice = n2d(sDateOfPractice)
+		practice.DateStr = setStrMonth(practice.DateOfPractice)
 		practices = append(practices, practice)
 	}
 	err := rows.Err()
