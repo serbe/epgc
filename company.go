@@ -24,18 +24,17 @@ type Company struct {
 
 func scanCompany(row *sql.Row) (Company, error) {
 	var (
-		sID        sql.NullInt64
-		sName      sql.NullString
-		sAddress   sql.NullString
-		sScopeID   sql.NullInt64
-		sNote      sql.NullString
-		sEmails    sql.NullString
-		sPhones    sql.NullString
-		sFaxes     sql.NullString
-		sPractices sql.NullString
-		company    Company
+		sID      sql.NullInt64
+		sName    sql.NullString
+		sAddress sql.NullString
+		sScopeID sql.NullInt64
+		sNote    sql.NullString
+		sEmails  sql.NullString
+		sPhones  sql.NullString
+		sFaxes   sql.NullString
+		company  Company
 	)
-	err := row.Scan(&sID, &sName, &sAddress, &sScopeID, &sNote, &sEmails, &sPhones, &sFaxes, &sPractices)
+	err := row.Scan(&sID, &sName, &sAddress, &sScopeID, &sNote, &sEmails, &sPhones, &sFaxes)
 	if err != nil {
 		log.Println("scanScope row.Scan ", err)
 		return company, err
@@ -48,7 +47,6 @@ func scanCompany(row *sql.Row) (Company, error) {
 	company.Emails = n2emails(sEmails)
 	company.Phones = n2phones(sPhones)
 	company.Faxes = n2faxes(sFaxes)
-	company.Practices = n2practices(sPractices)
 	return company, err
 }
 
@@ -115,14 +113,12 @@ func (e *Edb) GetCompany(id int64) (Company, error) {
 			c.note,
 			array_to_string(array_agg(DISTINCT e.email),',') AS email,
 			array_to_string(array_agg(DISTINCT p.phone),',') AS phone,
-			array_to_string(array_agg(DISTINCT f.phone),',') AS fax,
-			array_to_string(array_agg(DISTINCT pr.date_of_practice),',') AS practice
+			array_to_string(array_agg(DISTINCT f.phone),',') AS fax
         FROM
 			companies AS c
 		LEFT JOIN emails AS e ON c.id = e.company_id
 		LEFT JOIN phones AS p ON c.id = p.company_id AND p.fax = false
 		LEFT JOIN phones AS f ON c.id = f.company_id AND f.fax = true
-		LEFT JOIN practices AS pr ON c.id = pr.company_id
  		WHERE c.id = $1
 		GROUP BY c.id`)
 	if err != nil {
@@ -131,6 +127,11 @@ func (e *Edb) GetCompany(id int64) (Company, error) {
 	}
 	row := stmt.QueryRow(id)
 	company, err := scanCompany(row)
+	if err != nil {
+		log.Println("GetCompany scanCompany ", err)
+		return Company{}, err
+	}
+	company.Practices, err = e.GetPracticeCompany(id)
 	return company, err
 }
 
