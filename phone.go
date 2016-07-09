@@ -83,7 +83,7 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 	if id == 0 {
 		return Phone{}, nil
 	}
-	stmt, err := e.db.Prepare("SELECT id, company_id, people_id, phone, fax FROM phones WHERE id = $1")
+	stmt, err := e.db.Prepare(`SELECT id, company_id, people_id, phone, fax FROM phones WHERE id = $1`)
 	if err != nil {
 		log.Println("GetPhone e.db.Prepare", err)
 		return Phone{}, err
@@ -95,7 +95,7 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 
 // GetPhoneList - get all phones for list
 func (e *Edb) GetPhoneList() ([]Phone, error) {
-	rows, err := e.db.Query("SELECT id, company_id, people_id, phone, fax FROM phones ORDER BY phone ASC")
+	rows, err := e.db.Query(`SELECT id, company_id, people_id, phone, fax FROM phones ORDER BY phone ASC`)
 	if err != nil {
 		log.Println("GetPhoneList e.db.Query ", err)
 		return []Phone{}, err
@@ -109,7 +109,7 @@ func (e *Edb) GetCompanyPhones(id int64, fax bool) ([]Phone, error) {
 	if id == 0 {
 		return []Phone{}, nil
 	}
-	rows, err := e.db.Query("SELECT id, phone FROM phones ORDER BY phone ASC WHERE company_id = $1 AND fax = $2", id, fax)
+	rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE company_id = $1 AND fax = $2 ORDER BY phone ASC`, id, fax)
 	if err != nil {
 		log.Println("GetCompanyPhones e.db.Query ", err)
 		return []Phone{}, err
@@ -123,7 +123,7 @@ func (e *Edb) GetPeoplePhones(id int64, fax bool) ([]Phone, error) {
 	if id == 0 {
 		return []Phone{}, nil
 	}
-	rows, err := e.db.Query("SELECT id, phone FROM phones ORDER BY phone ASC WHERE people_id = $1 AND fax = $2", id, fax)
+	rows, err := e.db.Query(`SELECT id, phone FROM phones ORDER BY phone ASC WHERE people_id = $1 AND fax = $2`, id, fax)
 	if err != nil {
 		log.Println("GetPeoplePhones e.db.Query ", err)
 		return []Phone{}, err
@@ -137,7 +137,7 @@ func (e *Edb) GetCompanyPhonesAll(id int64, fax bool) ([]Phone, error) {
 	if id == 0 {
 		return []Phone{}, nil
 	}
-	rows, err := e.db.Query("SELECT id, phone FROM phones ORDER BY phone ASC WHERE company_id = $1 and fax = $2", id, fax)
+	rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE company_id = $1 and fax = $2 ORDER BY phone ASC`, id, fax)
 	if err != nil {
 		log.Println("GetCompanyPhonesAll e.db.Query ", err)
 		return []Phone{}, nil
@@ -151,7 +151,7 @@ func (e *Edb) GetPeoplePhonesAll(id int64, fax bool) ([]Phone, error) {
 	if id == 0 {
 		return []Phone{}, nil
 	}
-	rows, err := e.db.Query("SELECT id, phone FROM phones ORDER BY phone ASC WHERE people_id = $1 and fax = $2", id, fax)
+	rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE people_id = $1 and fax = $2 ORDER BY phone ASC`, id, fax)
 	if err != nil {
 		log.Println("GetPeoplePhonesAll e.db.Query ", err)
 		return []Phone{}, nil
@@ -185,7 +185,7 @@ func (e *Edb) CreateCompanyPhones(company Company, fax bool) error {
 	for _, value := range company.Phones {
 		var id int64
 		phone := Phone{}
-		err = e.db.QueryRow("SELECT id FROM phones WHERE company_id = $1 and phone = $2 and fax = $3 RETURNING id", company.ID, value.Phone, fax).Scan(&id)
+		err = e.db.QueryRow(`SELECT id FROM phones WHERE company_id = $1 and phone = $2 and fax = $3 RETURNING id`, company.ID, value.Phone, fax).Scan(&id)
 		if phone.ID == 0 {
 			value.CompanyID = company.ID
 			value.Fax = fax
@@ -214,7 +214,7 @@ func (e *Edb) CreatePeoplePhones(people People, fax bool) error {
 	}
 	for _, value := range allPhones {
 		phone := Phone{}
-		err = e.db.QueryRow("SELECT id FROM phones WHERE people_id = $1 and phone = $2 and fax = $3 RETURNING id", people.ID, value.Phone, fax).Scan(&phone.ID)
+		err = e.db.QueryRow(`SELECT id FROM phones WHERE people_id = $1 and phone = $2 and fax = $3 RETURNING id`, people.ID, value.Phone, fax).Scan(&phone.ID)
 		if phone.ID == 0 {
 			value.PeopleID = people.ID
 			value.Fax = fax
@@ -230,18 +230,26 @@ func (e *Edb) CreatePeoplePhones(people People, fax bool) error {
 
 // CleanCompanyPhones - delete all unnecessary phones by company id
 func (e *Edb) CleanCompanyPhones(company Company, fax bool) error {
-	phones := []int64{}
-	for _, value := range company.Phones {
+	var (
+		phones    []int64
+		allPhones []Phone
+	)
+	if fax {
+		allPhones = company.Faxes
+	} else {
+		allPhones = company.Phones
+	}
+	for _, value := range allPhones {
 		phones = append(phones, value.Phone)
 	}
 	if len(phones) == 0 {
-		_, err := e.db.Exec("DELETE FROM phones WHERE company_id = $1 and fax = $2", company.ID, fax)
+		_, err := e.db.Exec(`DELETE FROM phones WHERE company_id = $1 and fax = $2`, company.ID, fax)
 		if err != nil {
 			log.Println("CleanCompanyPhones e.db.Exec ", err)
 			return err
 		}
 	} else {
-		rows, err := e.db.Query("SELECT id, phone FROM phones WHERE company_id = $1 and fax = $2", company.ID, fax)
+		rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE company_id = $1 and fax = $2`, company.ID, fax)
 		if err != nil {
 			log.Println("CleanCompanyPhones e.db.Query ", err)
 			return err
@@ -253,7 +261,7 @@ func (e *Edb) CleanCompanyPhones(company Company, fax bool) error {
 		}
 		for _, value := range companyPhones {
 			if int64InSlice(value.Phone, phones) == false {
-				_, err = e.db.Exec("DELETE FROM phones WHERE company_id = $1 and phone = $2 and fax = $3", company.ID, value.Phone, fax)
+				_, err = e.db.Exec(`DELETE FROM phones WHERE company_id = $1 and phone = $2 and fax = $3`, company.ID, value.Phone, fax)
 				if err != nil {
 					log.Println("CleanCompanyPhones e.db.Exec ", err)
 					return err
@@ -266,18 +274,26 @@ func (e *Edb) CleanCompanyPhones(company Company, fax bool) error {
 
 // CleanPeoplePhones - delete all unnecessary phones by people id
 func (e *Edb) CleanPeoplePhones(people People, fax bool) error {
-	phones := []int64{}
-	for _, value := range people.Phones {
+	var (
+		phones    []int64
+		allPhones []Phone
+	)
+	if fax {
+		allPhones = people.Faxes
+	} else {
+		allPhones = people.Phones
+	}
+	for _, value := range allPhones {
 		phones = append(phones, value.Phone)
 	}
 	if len(phones) == 0 {
-		_, err := e.db.Exec("DELETE FROM phones WHERE people_id = $1 and fax = $2", people.ID, fax)
+		_, err := e.db.Exec(`DELETE FROM phones WHERE people_id = $1 and fax = $2`, people.ID, fax)
 		if err != nil {
 			log.Println("CleanPeoplePhones e.db.Exec ", err)
 			return err
 		}
 	} else {
-		rows, err := e.db.Query("SELECT id, phone FROM phones WHERE people_id = $1 and fax = $2", people.ID, fax)
+		rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE people_id = $1 and fax = $2`, people.ID, fax)
 		if err != nil {
 			log.Println("CleanPeoplePhones e.db.Query ", err)
 			return err
@@ -289,7 +305,7 @@ func (e *Edb) CleanPeoplePhones(people People, fax bool) error {
 		}
 		for _, value := range peoplePhones {
 			if int64InSlice(value.Phone, phones) == false {
-				_, err = e.db.Exec("DELETE FROM phones WHERE people_id = $1 and phone = $2 and fax = $3", people.ID, value.Phone, fax)
+				_, err = e.db.Exec(`DELETE FROM phones WHERE people_id = $1 and phone = $2 and fax = $3`, people.ID, value.Phone, fax)
 				if err != nil {
 					log.Println("CleanPeoplePhones e.db.Exec ", err)
 					return err
@@ -305,9 +321,9 @@ func (e *Edb) DeleteAllCompanyPhones(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM phones WHERE company_id = ?", id)
+	_, err := e.db.Exec(`DELETE FROM phones WHERE company_id = $1`, id)
 	if err != nil {
-		log.Println("DeleteAllCompanyPhones e.db.Exec ", err)
+		log.Println("DeleteAllCompanyPhones e.db.Exec ", id, err)
 	}
 	return err
 }
@@ -317,9 +333,9 @@ func (e *Edb) DeleteAllPeoplePhones(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec("DELETE FROM phones WHERE people_id = ?", id)
+	_, err := e.db.Exec(`DELETE FROM phones WHERE people_id = $1`, id)
 	if err != nil {
-		log.Println("DeleteAllPeoplePhones e.db.Exec ", err)
+		log.Println("DeleteAllPeoplePhones e.db.Exec ", id, err)
 	}
 	return err
 }
