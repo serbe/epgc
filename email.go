@@ -104,7 +104,7 @@ func (e *Edb) GetCompanyEmails(id int64) ([]Email, error) {
 	if id == 0 {
 		return []Email{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, email FROM emails ORDER BY name ASC WHERE company_id = $1`, id)
+	rows, err := e.db.Query(`SELECT id, email FROM emails WHERE company_id = $1 ORDER BY name ASC`, id)
 	if err != nil {
 		log.Println("GetCompanyEmails e.db.Query ", err)
 		return []Email{}, err
@@ -118,7 +118,7 @@ func (e *Edb) GetPeopleEmails(id int64) ([]Email, error) {
 	if id == 0 {
 		return []Email{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, email FROM emails ORDER BY name ASC WHERE people_id = $1`, id)
+	rows, err := e.db.Query(`SELECT id, email FROM emails WHERE people_id = $1 ORDER BY name ASC`, id)
 	if err != nil {
 		log.Println("GetPeopleEmails e.db.Query ", err)
 		return []Email{}, err
@@ -211,7 +211,7 @@ func (e *Edb) DeleteCompanyEmails(id int64) error {
 	}
 	_, err := e.db.Exec(`DELETE FROM emails WHERE company_id = $1`, id)
 	if err != nil {
-		log.Println("DeleteCompanyEmails ", err)
+		log.Println("DeleteCompanyEmails ", id, err)
 	}
 	return err
 }

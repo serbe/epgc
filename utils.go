@@ -147,7 +147,8 @@ func n2practices(practices sql.NullString) []Practice {
 	ps = strings.Split(p, ",")
 	for _, p = range ps {
 		var practice Practice
-		practice.Topic = p
+		practice.DateOfPractice = s2d(p)
+		practice.DateStr = d2s(practice.DateOfPractice)
 		pp = append(pp, practice)
 	}
 	return pp
@@ -159,6 +160,16 @@ func n2practices(practices sql.NullString) []Practice {
 // 	}
 // 	return 0
 // }
+
+func s2d(val string) time.Time {
+	t, _ := time.Parse("2006-01-02", val)
+	return t
+}
+
+func d2s(val time.Time) string {
+	str := val.Format("02.01.2006")
+	return str
+}
 
 func int64InSlice(a int64, list []int64) bool {
 	for _, b := range list {

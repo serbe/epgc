@@ -163,10 +163,10 @@ func (e *Edb) GetPracticeCompany(id int64) ([]Practice, error) {
 		practices AS p
 	LEFT JOIN
 		kinds AS k ON k.id = p.kind_id
-	ORDER BY
-		date_of_practice
 	WHERE
-	    p.company_id = $1`)
+	    p.company_id = $1
+	ORDER BY
+		date_of_practice`)
 	if err != nil {
 		log.Println("GetPracticeCompany e.db.Prepare ", err)
 		return []Practice{}, err
@@ -207,9 +207,9 @@ func (e *Edb) DeletePractice(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM practices WHERE id=?`, id)
+	_, err := e.db.Exec(`DELETE FROM practices WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeletePractice e.db.Exec: ", err)
+		log.Println("DeletePractice e.db.Exec: ", id, err)
 		return fmt.Errorf("DeletePractice e.db.Exec: %s", err)
 	}
 	return err

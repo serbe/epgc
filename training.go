@@ -151,7 +151,7 @@ func (e *Edb) DeleteTraining(id int64) error {
 	}
 	_, err := e.db.Exec(`DELETE FROM trainings WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeleteTraining ", err)
+		log.Println("DeleteTraining ", id, err)
 	}
 	return err
 }

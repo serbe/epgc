@@ -116,7 +116,7 @@ func (e *Edb) GetCompany(id int64) (Company, error) {
 			array_to_string(array_agg(DISTINCT e.email),',') AS email,
 			array_to_string(array_agg(DISTINCT p.phone),',') AS phone,
 			array_to_string(array_agg(DISTINCT f.phone),',') AS fax,
-			array_to_string(array_agg(DISTINCT pr.topic),',') AS practice
+			array_to_string(array_agg(DISTINCT pr.date_of_practice),',') AS practice
         FROM
 			companies AS c
 		LEFT JOIN emails AS e ON c.id = e.company_id
@@ -143,7 +143,7 @@ func (e *Edb) GetCompanyList() ([]Company, error) {
 			s.name AS scope_name,
 			array_to_string(array_agg(DISTINCT p.phone),',') AS phone,
 			array_to_string(array_agg(DISTINCT f.phone),',') AS fax,
-			array_to_string(array_agg(DISTINCT pr.topic),',') AS practice
+			array_to_string(array_agg(DISTINCT pr.date_of_practice),',') AS practice
         FROM
 			companies AS c
 		LEFT JOIN scopes AS s ON c.scope_id = s.id
@@ -196,7 +196,7 @@ func (e *Edb) CreateCompany(company Company) (int64, error) {
 
 // UpdateCompany - save company changes
 func (e *Edb) UpdateCompany(company Company) error {
-	stmt, err := e.db.Prepare(`UPDATE companies SET name=$2, address=$3, scope_id=$4, note=$5, updated_at = now(), updated_at = now() WHERE id=$1`)
+	stmt, err := e.db.Prepare(`UPDATE companies SET name=$2, address=$3, scope_id=$4, note=$5, updated_at = now() WHERE id=$1`)
 	if err != nil {
 		log.Println("UpdateCompany e.db.Prepare ", err)
 		return err
@@ -218,9 +218,9 @@ func (e *Edb) DeleteCompany(id int64) error {
 		return nil
 	}
 	e.DeleteAllCompanyPhones(id)
-	_, err := e.db.Exec(`DELETE FROM companies WHERE id=?`, id)
+	_, err := e.db.Exec(`DELETE FROM companies WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeleteCompany e.db.Exec ", err)
+		log.Println("DeleteCompany e.db.Exec ", id, err)
 	}
 	return err
 }

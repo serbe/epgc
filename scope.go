@@ -139,7 +139,7 @@ func (e *Edb) DeleteScope(id int64) error {
 	}
 	_, err := e.db.Exec(`DELETE FROM scopes WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeleteScope e.db.Exec ", err)
+		log.Println("DeleteScope e.db.Exec ", id, err)
 	}
 	return err
 }

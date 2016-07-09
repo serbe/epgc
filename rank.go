@@ -139,7 +139,7 @@ func (e *Edb) DeleteRank(id int64) error {
 	}
 	_, err := e.db.Exec(`DELETE FROM ranks WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeleteRank e.db.Exec ", err)
+		log.Println("DeleteRank e.db.Exec ", id, err)
 	}
 	return err
 }

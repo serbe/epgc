@@ -140,7 +140,7 @@ func (e *Edb) DeleteKind(id int64) error {
 	}
 	_, err := e.db.Exec(`DELETE FROM kinds WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeleteKind e.db.Exec ", err)
+		log.Println("DeleteKind e.db.Exec ", id, err)
 	}
 	return err
 }

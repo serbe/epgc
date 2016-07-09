@@ -237,7 +237,7 @@ func (e *Edb) DeletePeople(id int64) error {
 	}
 	e.db.Exec(`DELETE FROM peoples WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeletePeople e.db.Exec ", err)
+		log.Println("DeletePeople e.db.Exec ", id, err)
 	}
 	return err
 }

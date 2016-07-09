@@ -144,7 +144,7 @@ func (e *Edb) DeletePost(id int64) error {
 	}
 	_, err := e.db.Exec(`DELETE FROM posts WHERE id = $1`, id)
 	if err != nil {
-		log.Println("DeletePost e.db.Exec ", err)
+		log.Println("DeletePost e.db.Exec ", id, err)
 	}
 	return err
 }
