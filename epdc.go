@@ -34,7 +34,7 @@ func InitDB(dbname string, user string, password string, sslmode string, logsql 
 }
 
 func (e *Edb) createAllTables() error {
-	err := e.trainingCreateTable()
+	err := e.educationCreateTable()
 	if err != nil {
 		return err
 	}

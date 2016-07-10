@@ -1,1 +1,0 @@
-CREATE TABLE IF NOT EXISTS trainings (id bigserial PRIMARY KEY, start_date time, end_date time, note text);

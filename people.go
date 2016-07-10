@@ -26,7 +26,7 @@ type People struct {
 	Emails    []Email    `sql:"-"`
 	Phones    []Phone    `sql:"-"`
 	Faxes     []Phone    `sql:"-"`
-	Trainings []Training `sql:"-"`
+	Educations []Education `sql:"-"`
 	CreatedAt time.Time  `sql:"created_at" json:"created_at"`
 	UpdatedAt time.Time  `sql:"updated_at" json:"updated_at"`
 }
@@ -44,7 +44,7 @@ func scanPeople(row *sql.Row) (People, error) {
 		sEmails    sql.NullString
 		sPhones    sql.NullString
 		sFaxes     sql.NullString
-		// strainings sql.NullString
+		// seducations sql.NullString
 		people People
 	)
 	err := row.Scan(&sID, &sName, &sCompanyID, &sPostID, &sPostGOID, &sRankID, &sBirthday, &sNote, &sEmails, &sPhones, &sFaxes)
@@ -142,7 +142,7 @@ func (e *Edb) GetPeople(id int64) (People, error) {
 	}
 	row := stmt.QueryRow(id)
 	people, err := scanPeople(row)
-	// people.Trainings = GetPeopleTrainings(people.ID)
+	// people.Educations = GetPeopleEducations(people.ID)
 	return people, err
 }
 
@@ -202,7 +202,7 @@ func (e *Edb) CreatePeople(people People) (int64, error) {
 	_ = e.CreatePeopleEmails(people)
 	_ = e.CreatePeoplePhones(people, false)
 	_ = e.CreatePeoplePhones(people, true)
-	// CreatePeopleTrainings(people)
+	// CreatePeopleEducations(people)
 	return people.ID, nil
 }
 
@@ -221,7 +221,7 @@ func (e *Edb) UpdatePeople(people People) error {
 	_ = e.CreatePeopleEmails(people)
 	_ = e.CreatePeoplePhones(people, false)
 	_ = e.CreatePeoplePhones(people, true)
-	// CreatePeopleTrainings(people)
+	// CreatePeopleEducations(people)
 	return nil
 }
 
