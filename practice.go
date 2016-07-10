@@ -140,7 +140,7 @@ func (e *Edb) GetPracticeList() ([]Practice, error) {
 	LEFT JOIN
 		kinds AS k ON k.id = p.kind_id
 	ORDER BY
-		date_of_practice`)
+		date_of_practice DESC`)
 	if err != nil {
 		log.Println("GetPracticeAll e.db.Query ", err)
 		return []Practice{}, err
