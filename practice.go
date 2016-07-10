@@ -87,6 +87,15 @@ func scanPractices(rows *sql.Rows, opt string) ([]Practice, error) {
 			// if len(practice.Topic) > 210 {
 			// 	practice.Topic = practice.Topic[0:210]
 			// }
+		case "near":
+			err := rows.Scan(&sID, &sCompanyName, &sKindName, &sTopic, &sDateOfPractice)
+			if err != nil {
+				log.Println("scanPractices rows.Scan near ", err)
+				return practices, err
+			}
+			practice.Company.Name = n2s(sCompanyName)
+			practice.Kind.Name = n2s(sKindName)
+			practice.Topic = n2s(sTopic)
 		}
 		practice.ID = n2i(sID)
 		practice.DateOfPractice = n2d(sDateOfPractice)
@@ -177,6 +186,33 @@ func (e *Edb) GetPracticeCompany(id int64) ([]Practice, error) {
 		return []Practice{}, err
 	}
 	practices, err := scanPractices(rows, "company")
+	return practices, err
+}
+
+// GetPracticeNear - get 10 nearest practices
+func (e *Edb) GetPracticeNear() ([]Practice, error) {
+	rows, err := e.db.Query(`SELECT
+		p.id,
+		c.name AS company_name,
+		k.name AS kind_name,
+		p.topic,
+		p.date_of_practice
+	FROM
+		practices AS p
+	LEFT JOIN
+		companies AS c ON c.id = p.company_id
+	LEFT JOIN
+		kinds AS k ON k.id = p.kind_id
+	WHERE
+		p.date_of_practice > now()
+	ORDER BY
+		date_of_practice
+	LIMIT 10`)
+	if err != nil {
+		log.Println("GetPracticeNear e.db.Query ", err)
+		return []Practice{}, err
+	}
+	practices, err := scanPractices(rows, "near")
 	return practices, err
 }
 
