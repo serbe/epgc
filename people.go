@@ -11,24 +11,24 @@ import (
 
 // People is struct for people
 type People struct {
-	ID        int64      `sql:"id" json:"id"`
-	Name      string     `sql:"name" json:"name"`
-	Company   Company    `sql:"-"`
-	CompanyID int64      `sql:"company_id, null" json:"company-id"`
-	Post      Post       `sql:"-"`
-	PostID    int64      `sql:"post_id, null" json:"post-id"`
-	PostGO    Post       `sql:"-"`
-	PostGOID  int64      `sql:"post_go_id, null" json:"post-go-id"`
-	Rank      Rank       `sql:"-"`
-	RankID    int64      `sql:"rank_id, null" json:"rank-id"`
-	Birthday  time.Time  `sql:"birthday, null" json:"birthday"`
-	Note      string     `sql:"note, null" json:"note"`
-	Emails    []Email    `sql:"-"`
-	Phones    []Phone    `sql:"-"`
-	Faxes     []Phone    `sql:"-"`
+	ID         int64       `sql:"id" json:"id"`
+	Name       string      `sql:"name" json:"name"`
+	Company    Company     `sql:"-"`
+	CompanyID  int64       `sql:"company_id, null" json:"company-id"`
+	Post       Post        `sql:"-"`
+	PostID     int64       `sql:"post_id, null" json:"post-id"`
+	PostGO     Post        `sql:"-"`
+	PostGOID   int64       `sql:"post_go_id, null" json:"post-go-id"`
+	Rank       Rank        `sql:"-"`
+	RankID     int64       `sql:"rank_id, null" json:"rank-id"`
+	Birthday   time.Time   `sql:"birthday, null" json:"birthday"`
+	Note       string      `sql:"note, null" json:"note"`
+	Emails     []Email     `sql:"-"`
+	Phones     []Phone     `sql:"-"`
+	Faxes      []Phone     `sql:"-"`
 	Educations []Education `sql:"-"`
-	CreatedAt time.Time  `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time  `sql:"updated_at" json:"updated_at"`
+	CreatedAt  time.Time   `sql:"created_at" json:"created_at"`
+	UpdatedAt  time.Time   `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPeople(row *sql.Row) (People, error) {
@@ -73,22 +73,21 @@ func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
 		var (
 			sID          sql.NullInt64
 			sName        sql.NullString
-			scompanyName sql.NullString
-			spostName    sql.NullString
+			sCompanyName sql.NullString
+			sPostName    sql.NullString
 			sPhones      sql.NullString
 			sFaxes       sql.NullString
 			people       People
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sID, &sName, &scompanyName, &spostName, &sPhones, &sFaxes)
+			err := rows.Scan(&sID, &sName, &sCompanyName, &sPostName, &sPhones, &sFaxes)
 			if err != nil {
 				log.Println("scanPeople rows.Scan list ", err)
 				return peoples, err
 			}
-			people.Name = n2s(sName)
-			people.Company.Name = n2s(scompanyName)
-			people.Post.Name = n2s(spostName)
+			people.Company.Name = n2s(sCompanyName)
+			people.Post.Name = n2s(sPostName)
 			people.Phones = n2phones(sPhones)
 			people.Faxes = n2faxes(sFaxes)
 		case "select":
@@ -97,12 +96,19 @@ func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
 				log.Println("scanPeople rows.Scan select ", err)
 				return peoples, err
 			}
-			people.Name = n2s(sName)
 			// if len(people.Name) > 210 {
 			// 	people.Name = people.Name[0:210]
 			// }
+		case "company":
+			err := rows.Scan(&sID, &sName, &sPostName)
+			if err != nil {
+				log.Println("scanPeople rows.Scan select ", err)
+				return peoples, err
+			}
+			people.Post.Name = n2s(sPostName)
 		}
 		people.ID = n2i(sID)
+		people.Name = n2s(sName)
 		peoples = append(peoples, people)
 	}
 	err := rows.Err()
@@ -184,6 +190,30 @@ func (e *Edb) GetPeopleSelect() ([]People, error) {
 		return []People{}, err
 	}
 	peoples, err := scanPeoples(rows, "select")
+	return peoples, err
+}
+
+// GetPeopleCompany - get all peoples from company
+func (e *Edb) GetPeopleCompany(id int64) ([]People, error) {
+	stmt, err := e.db.Prepare(`SELECT
+		p.id,
+		p.name,
+		po.name AS post_name
+	FROM
+		peoples AS p
+	LEFT JOIN posts AS po ON p.post_id = po.id
+	WHERE p.company_id = $1
+	ORDER BY name ASC`)
+	if err != nil {
+		log.Println("GetPeopleCompany e.db.Prepare ", err)
+		return []People{}, err
+	}
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Println("GetPeopleCompany e.db.Query ", err)
+		return []People{}, err
+	}
+	peoples, err := scanPeoples(rows, "company")
 	return peoples, err
 }
 

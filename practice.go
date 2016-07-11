@@ -52,27 +52,27 @@ func scanPractices(rows *sql.Rows, opt string) ([]Practice, error) {
 	var practices []Practice
 	for rows.Next() {
 		var (
-			sID sql.NullInt64
-			// sCompanyID      sql.NullInt64
+			sID          sql.NullInt64
+			sCompanyID   sql.NullInt64
 			sCompanyName sql.NullString
 			// sKindID         sql.NullInt64
 			sKindName       sql.NullString
 			sTopic          sql.NullString
 			sDateOfPractice pq.NullTime
-			sNote           sql.NullString
-			practice        Practice
+			// sNote           sql.NullString
+			practice Practice
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sID, &sCompanyName, &sKindName, &sTopic, &sDateOfPractice, &sNote)
+			err := rows.Scan(&sID, &sCompanyID, &sCompanyName, &sKindName, &sTopic, &sDateOfPractice)
 			if err != nil {
 				log.Println("scanPractices rows.Scan list ", err)
 				return practices, err
 			}
+			practice.CompanyID = n2i(sCompanyID)
 			practice.Company.Name = n2s(sCompanyName)
 			practice.Kind.Name = n2s(sKindName)
 			practice.Topic = n2s(sTopic)
-			practice.Note = n2s(sNote)
 		case "company":
 			err := rows.Scan(&sID, &sKindName, &sTopic, &sDateOfPractice)
 			if err != nil {
@@ -137,11 +137,11 @@ func (e *Edb) GetPractice(id int64) (Practice, error) {
 func (e *Edb) GetPracticeList() ([]Practice, error) {
 	rows, err := e.db.Query(`SELECT
 		p.id,
+		p.company_id,
 		c.name AS company_name,
 		k.name AS kind_name,
 		p.topic,
-		p.date_of_practice,
-		p.note
+		p.date_of_practice
 	FROM
 		practices AS p
 	LEFT JOIN

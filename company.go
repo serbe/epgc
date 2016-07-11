@@ -18,6 +18,7 @@ type Company struct {
 	Phones    []Phone    `sql:"-"`
 	Faxes     []Phone    `sql:"-"`
 	Practices []Practice `sql:"-"`
+	Peoples   []People   `sql:"-"`
 	CreatedAt time.Time  `sql:"created_at" json:"created_at"`
 	UpdatedAt time.Time  `sql:"updated_at" json:"updated_at"`
 }
