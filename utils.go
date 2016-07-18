@@ -34,9 +34,7 @@ func d2n(val time.Time) pq.NullTime {
 
 func sd2n(val string) pq.NullTime {
 	var d2n pq.NullTime
-	log.Println(val)
 	t, err := time.Parse("02.01.2006", val)
-	log.Println(t)
 	if err != nil {
 		return d2n
 	}
@@ -175,7 +173,7 @@ func n2practices(practices sql.NullString) []Practice {
 	for _, p = range ps {
 		var practice Practice
 		practice.DateOfPractice = p
-		practice.DateStr = practice.DateOfPractice
+		practice.DateStr = s2sd(p)
 		pp = append(pp, practice)
 	}
 	return pp
@@ -191,6 +189,16 @@ func n2practices(practices sql.NullString) []Practice {
 func s2d(val string) time.Time {
 	t, _ := time.Parse("2006-01-02", val)
 	return t
+}
+
+func s2sd(val string) string {
+	var result string
+	t, err := time.Parse("2006-01-02", val)
+	if err != nil {
+		return result
+	}
+	result = t.Format("02.01.2006")
+	return result
 }
 
 func d2s(val time.Time) string {
@@ -209,7 +217,7 @@ func int64InSlice(a int64, list []int64) bool {
 
 func setStrMonth(d string) string {
 	var result string
-	t, err := time.Parse("2006-01-02", d)
+	t, err := time.Parse("02.01.2006", d)
 	if err != nil {
 		return result
 	}
