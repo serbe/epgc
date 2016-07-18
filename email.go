@@ -3,17 +3,16 @@ package epgc
 import (
 	"database/sql"
 	"log"
-	"time"
 )
 
 // Email - struct for email
 type Email struct {
-	ID        int64     `sql:"id" json:"id"`
-	CompanyID int64     `sql:"company_id, pk, null" json:"company-id"`
-	PeopleID  int64     `sql:"people_id, pk, null" json:"people-id"`
-	Email     string    `sql:"email, null" json:"email"`
-	CreatedAt time.Time `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
+	ID        int64  `sql:"id" json:"id"`
+	CompanyID int64  `sql:"company_id, pk, null" json:"company-id"`
+	PeopleID  int64  `sql:"people_id, pk, null" json:"people-id"`
+	Email     string `sql:"email, null" json:"email"`
+	CreatedAt string `sql:"created_at" json:"created_at"`
+	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
 func scanEmail(row *sql.Row) (Email, error) {

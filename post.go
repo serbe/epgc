@@ -3,17 +3,16 @@ package epgc
 import (
 	"database/sql"
 	"log"
-	"time"
 )
 
 // Post - struct for post
 type Post struct {
-	ID        int64     `sql:"id" json:"id"`
-	Name      string    `sql:"name" json:"name"`
-	GO        bool      `sql:"go" json:"go"`
-	Note      string    `sql:"note, null" json:"note"`
-	CreatedAt time.Time `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
+	ID        int64  `sql:"id" json:"id"`
+	Name      string `sql:"name" json:"name"`
+	GO        bool   `sql:"go" json:"go"`
+	Note      string `sql:"note, null" json:"note"`
+	CreatedAt string `sql:"created_at" json:"created_at"`
+	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPost(row *sql.Row) (Post, error) {

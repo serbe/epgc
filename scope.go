@@ -3,16 +3,15 @@ package epgc
 import (
 	"database/sql"
 	"log"
-	"time"
 )
 
 // Scope - struct for scope
 type Scope struct {
-	ID        int64     `sql:"id" json:"id"`
-	Name      string    `sql:"name" json:"name"`
-	Note      string    `sql:"note, null" json:"note"`
-	CreatedAt time.Time `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
+	ID        int64  `sql:"id" json:"id"`
+	Name      string `sql:"name" json:"name"`
+	Note      string `sql:"note, null" json:"note"`
+	CreatedAt string `sql:"created_at" json:"created_at"`
+	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
 func scanScope(row *sql.Row) (Scope, error) {

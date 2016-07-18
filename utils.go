@@ -2,6 +2,7 @@ package epgc
 
 import (
 	"database/sql"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -28,6 +29,24 @@ func d2n(val time.Time) pq.NullTime {
 		d2n.Valid = true
 		d2n.Time = val
 	}
+	return d2n
+}
+
+func sd2n(val string) pq.NullTime {
+	var d2n pq.NullTime
+	log.Println(val)
+	t, err := time.Parse("02.01.2006", val)
+	log.Println(t)
+	if err != nil {
+		return d2n
+	}
+	if t.Format("02.01.2006") == "01.01.0001" {
+		d2n.Valid = false
+	} else {
+		d2n.Valid = true
+		d2n.Time = t
+	}
+	log.Println(t.Format("02.01.2006"))
 	return d2n
 }
 
@@ -67,6 +86,14 @@ func n2b(val sql.NullBool) bool {
 
 func n2d(val pq.NullTime) time.Time {
 	return val.Time
+}
+
+func n2sd(val pq.NullTime) string {
+	var str string
+	if val.Valid == true {
+		str = val.Time.Format("02.01.2006")
+	}
+	return str
 }
 
 func n2emails(emails sql.NullString) []Email {
@@ -147,8 +174,8 @@ func n2practices(practices sql.NullString) []Practice {
 	ps = strings.Split(p, ",")
 	for _, p = range ps {
 		var practice Practice
-		practice.DateOfPractice = s2d(p)
-		practice.DateStr = d2s(practice.DateOfPractice)
+		practice.DateOfPractice = p
+		practice.DateStr = practice.DateOfPractice
 		pp = append(pp, practice)
 	}
 	return pp
@@ -180,10 +207,15 @@ func int64InSlice(a int64, list []int64) bool {
 	return false
 }
 
-func setStrMonth(d time.Time) (output string) {
-	str := d.Format("02.01.2006")
+func setStrMonth(d string) string {
+	var result string
+	t, err := time.Parse("2006-01-02", d)
+	if err != nil {
+		return result
+	}
+	str := t.Format("02.01.2006")
 	spl := strings.Split(str, ".")
 	month := map[string]string{"01": "января", "02": "февраля", "03": "марта", "04": "апреля", "05": "мая", "06": "июня", "07": "июля", "08": "августа", "09": "сентября", "10": "октября", "11": "ноября", "12": "декабря "}
-	output = spl[0] + " " + month[spl[1]] + " " + spl[2] + " года"
-	return
+	result = spl[0] + " " + month[spl[1]] + " " + spl[2] + " года"
+	return result
 }

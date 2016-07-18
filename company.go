@@ -3,7 +3,6 @@ package epgc
 import (
 	"database/sql"
 	"log"
-	"time"
 )
 
 // Company is struct for company
@@ -19,8 +18,8 @@ type Company struct {
 	Faxes     []Phone    `sql:"-"`
 	Practices []Practice `sql:"-"`
 	Peoples   []People   `sql:"-"`
-	CreatedAt time.Time  `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time  `sql:"updated_at" json:"updated_at"`
+	CreatedAt string     `sql:"created_at" json:"created_at"`
+	UpdatedAt string     `sql:"updated_at" json:"updated_at"`
 }
 
 func scanCompany(row *sql.Row) (Company, error) {

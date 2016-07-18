@@ -3,21 +3,20 @@ package epgc
 import (
 	"database/sql"
 	"log"
-	"time"
 
 	"github.com/lib/pq"
 )
 
 // Education - struct for education
 type Education struct {
-	ID        int64     `sql:"id" json:"id" `
-	StartDate time.Time `sql:"start_date" json:"start-date"`
-	EndDate   time.Time `sql:"end_date" json:"end-date"`
-	StartStr  string    `sql:"-" json:"start-str"`
-	EndStr    string    `sql:"-" json:"end-str"`
-	Note      string    `sql:"note, null" json:"note"`
-	CreatedAt time.Time `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
+	ID        int64  `sql:"id" json:"id" `
+	StartDate string `sql:"start_date" json:"start-date"`
+	EndDate   string `sql:"end_date" json:"end-date"`
+	StartStr  string `sql:"-" json:"start-str"`
+	EndStr    string `sql:"-" json:"end-str"`
+	Note      string `sql:"note, null" json:"note"`
+	CreatedAt string `sql:"created_at" json:"created_at"`
+	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
 func scanEducation(row *sql.Row) (Education, error) {
@@ -26,7 +25,7 @@ func scanEducation(row *sql.Row) (Education, error) {
 		sStartDate pq.NullTime
 		sEndDate   pq.NullTime
 		sNote      sql.NullString
-		education   Education
+		education  Education
 	)
 	err := row.Scan(&sID, &sStartDate, &sEndDate, &sNote)
 	if err != nil {
@@ -34,8 +33,8 @@ func scanEducation(row *sql.Row) (Education, error) {
 		return education, err
 	}
 	education.ID = n2i(sID)
-	education.StartDate = n2d(sStartDate)
-	education.EndDate = n2d(sEndDate)
+	education.StartDate = n2sd(sStartDate)
+	education.EndDate = n2sd(sEndDate)
 	education.Note = n2s(sNote)
 	return education, nil
 }
@@ -48,7 +47,7 @@ func scanEducations(rows *sql.Rows, opt string) ([]Education, error) {
 			sStartDate pq.NullTime
 			sEndDate   pq.NullTime
 			sNote      sql.NullString
-			education   Education
+			education  Education
 		)
 		switch opt {
 		case "list":
@@ -59,8 +58,8 @@ func scanEducations(rows *sql.Rows, opt string) ([]Education, error) {
 			}
 		}
 		education.ID = n2i(sID)
-		education.StartDate = n2d(sStartDate)
-		education.EndDate = n2d(sEndDate)
+		education.StartDate = n2sd(sStartDate)
+		education.EndDate = n2sd(sEndDate)
 		education.Note = n2s(sNote)
 		educations = append(educations, education)
 	}
@@ -129,7 +128,7 @@ func (e *Edb) CreateEducation(education Education) (int64, error) {
 		log.Println("CreateEducation e.db.Prepare ", err)
 		return 0, err
 	}
-	err = stmt.QueryRow(d2n(education.StartDate), d2n(education.EndDate), s2n(education.Note)).Scan(&education.ID)
+	err = stmt.QueryRow(sd2n(education.StartDate), sd2n(education.EndDate), s2n(education.Note)).Scan(&education.ID)
 	return education.ID, err
 }
 
@@ -140,7 +139,7 @@ func (e *Edb) UpdateEducation(education Education) error {
 		log.Println("UpdateEducation e.db.Prepare ", err)
 		return err
 	}
-	_, err = stmt.Exec(education.ID, d2n(education.StartDate), d2n(education.EndDate), s2n(education.Note))
+	_, err = stmt.Exec(education.ID, sd2n(education.StartDate), sd2n(education.EndDate), s2n(education.Note))
 	return err
 }
 

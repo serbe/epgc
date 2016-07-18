@@ -2,7 +2,6 @@ package epgc
 
 import (
 	"log"
-	"time"
 
 	"database/sql"
 
@@ -21,14 +20,14 @@ type People struct {
 	PostGOID   int64       `sql:"post_go_id, null" json:"post-go-id"`
 	Rank       Rank        `sql:"-"`
 	RankID     int64       `sql:"rank_id, null" json:"rank-id"`
-	Birthday   time.Time   `sql:"birthday, null" json:"birthday"`
+	Birthday   string      `sql:"birthday, null" json:"birthday"`
 	Note       string      `sql:"note, null" json:"note"`
 	Emails     []Email     `sql:"-"`
 	Phones     []Phone     `sql:"-"`
 	Faxes      []Phone     `sql:"-"`
 	Educations []Education `sql:"-"`
-	CreatedAt  time.Time   `sql:"created_at" json:"created_at"`
-	UpdatedAt  time.Time   `sql:"updated_at" json:"updated_at"`
+	CreatedAt  string      `sql:"created_at" json:"created_at"`
+	UpdatedAt  string      `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPeople(row *sql.Row) (People, error) {
@@ -58,7 +57,7 @@ func scanPeople(row *sql.Row) (People, error) {
 	people.PostID = n2i(sPostID)
 	people.PostGOID = n2i(sPostGOID)
 	people.RankID = n2i(sRankID)
-	people.Birthday = n2d(sBirthday)
+	people.Birthday = n2sd(sBirthday)
 	people.Note = n2s(sNote)
 	people.Emails = n2emails(sEmails)
 	people.Phones = n2phones(sPhones)
@@ -224,7 +223,7 @@ func (e *Edb) CreatePeople(people People) (int64, error) {
 		log.Println("CreatePeople e.db.Prepare ", err)
 		return 0, err
 	}
-	err = stmt.QueryRow(s2n(people.Name), i2n(people.CompanyID), i2n(people.PostID), i2n(people.PostGOID), i2n(people.RankID), d2n(people.Birthday), s2n(people.Note)).Scan(&people.ID)
+	err = stmt.QueryRow(s2n(people.Name), i2n(people.CompanyID), i2n(people.PostID), i2n(people.PostGOID), i2n(people.RankID), sd2n(people.Birthday), s2n(people.Note)).Scan(&people.ID)
 	if err != nil {
 		log.Println("CreatePeople db.QueryRow ", err)
 		return 0, err
@@ -243,7 +242,7 @@ func (e *Edb) UpdatePeople(people People) error {
 		log.Println("UpdatePeople e.db.Prepare ", err)
 		return err
 	}
-	_, err = stmt.Exec(i2n(people.ID), s2n(people.Name), i2n(people.CompanyID), i2n(people.PostID), i2n(people.PostGOID), i2n(people.RankID), d2n(people.Birthday), s2n(people.Note))
+	_, err = stmt.Exec(i2n(people.ID), s2n(people.Name), i2n(people.CompanyID), i2n(people.PostID), i2n(people.PostGOID), i2n(people.RankID), sd2n(people.Birthday), s2n(people.Note))
 	if err != nil {
 		log.Println("UpdatePeople stmt.Exec ", err)
 		return err

@@ -3,18 +3,17 @@ package epgc
 import (
 	"database/sql"
 	"log"
-	"time"
 )
 
 // Phone - struct for phone
 type Phone struct {
-	ID        int64     `sql:"id" json:"id"`
-	CompanyID int64     `sql:"company_id, pk, null" json:"company-id"`
-	PeopleID  int64     `sql:"people_id, pk, null" json:"people-id"`
-	Phone     int64     `sql:"phone, null" json:"phone"`
-	Fax       bool      `sql:"fax, null" json:"fax"`
-	CreatedAt time.Time `sql:"created_at" json:"created_at"`
-	UpdatedAt time.Time `sql:"updated_at" json:"updated_at"`
+	ID        int64  `sql:"id" json:"id"`
+	CompanyID int64  `sql:"company_id, pk, null" json:"company-id"`
+	PeopleID  int64  `sql:"people_id, pk, null" json:"people-id"`
+	Phone     int64  `sql:"phone, null" json:"phone"`
+	Fax       bool   `sql:"fax, null" json:"fax"`
+	CreatedAt string `sql:"created_at" json:"created_at"`
+	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPhone(row *sql.Row) (Phone, error) {

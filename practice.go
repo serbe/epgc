@@ -4,24 +4,23 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/lib/pq"
 )
 
 // Practice - struct for practice
 type Practice struct {
-	ID             int64     `sql:"id" json:"id"`
-	Company        Company   `sql:"-"`
-	CompanyID      int64     `sql:"company_id, null" json:"company-id"`
-	Kind           Kind      `sql:"-"`
-	KindID         int64     `sql:"kind_id, null" json:"kind-id"`
-	Topic          string    `sql:"topic, null" json:"topic"`
-	DateOfPractice time.Time `sql:"date_of_practice, null" json:"date-of-practice"`
-	DateStr        string    `sql:"-" json:"date-str"`
-	Note           string    `sql:"note, null" json:"note"`
-	CreatedAt      time.Time `sql:"created_at" json:"created_at"`
-	UpdatedAt      time.Time `sql:"updated_at" json:"updated_at"`
+	ID             int64   `sql:"id" json:"id"`
+	Company        Company `sql:"-"`
+	CompanyID      int64   `sql:"company_id, null" json:"company-id"`
+	Kind           Kind    `sql:"-"`
+	KindID         int64   `sql:"kind_id, null" json:"kind-id"`
+	Topic          string  `sql:"topic, null" json:"topic"`
+	DateOfPractice string  `sql:"date_of_practice, null" json:"date-of-practice"`
+	DateStr        string  `sql:"-" json:"date-str"`
+	Note           string  `sql:"note, null" json:"note"`
+	CreatedAt      string  `sql:"created_at" json:"created_at"`
+	UpdatedAt      string  `sql:"updated_at" json:"updated_at"`
 }
 
 func scanPractice(row *sql.Row) (Practice, error) {
@@ -43,7 +42,7 @@ func scanPractice(row *sql.Row) (Practice, error) {
 	practice.CompanyID = n2i(sCompanyID)
 	practice.KindID = n2i(sKindID)
 	practice.Topic = n2s(sTopic)
-	practice.DateOfPractice = n2d(sDateOfPractice)
+	practice.DateOfPractice = n2sd(sDateOfPractice)
 	practice.Note = n2s(sNote)
 	return practice, nil
 }
@@ -98,7 +97,7 @@ func scanPractices(rows *sql.Rows, opt string) ([]Practice, error) {
 			practice.Topic = n2s(sTopic)
 		}
 		practice.ID = n2i(sID)
-		practice.DateOfPractice = n2d(sDateOfPractice)
+		practice.DateOfPractice = n2sd(sDateOfPractice)
 		practice.DateStr = setStrMonth(practice.DateOfPractice)
 		practices = append(practices, practice)
 	}
@@ -223,7 +222,7 @@ func (e *Edb) CreatePractice(practice Practice) (int64, error) {
 		log.Println("CreatePractice e.db.Prepare ", err)
 		return 0, err
 	}
-	err = stmt.QueryRow(i2n(practice.CompanyID), i2n(practice.KindID), s2n(practice.Topic), d2n(practice.DateOfPractice), s2n(practice.Note)).Scan(&practice.ID)
+	err = stmt.QueryRow(i2n(practice.CompanyID), i2n(practice.KindID), s2n(practice.Topic), sd2n(practice.DateOfPractice), s2n(practice.Note)).Scan(&practice.ID)
 	return practice.ID, err
 }
 
@@ -234,7 +233,7 @@ func (e *Edb) UpdatePractice(practice Practice) error {
 		log.Println("UpdatePractice e.db.Prepare ", err)
 		return err
 	}
-	_, err = stmt.Exec(practice.ID, i2n(practice.CompanyID), i2n(practice.KindID), s2n(practice.Topic), d2n(practice.DateOfPractice), s2n(practice.Note))
+	_, err = stmt.Exec(practice.ID, i2n(practice.CompanyID), i2n(practice.KindID), s2n(practice.Topic), sd2n(practice.DateOfPractice), s2n(practice.Note))
 	return err
 }
 
