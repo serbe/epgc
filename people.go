@@ -244,7 +244,7 @@ func (e *Edb) GetPeopleSelect() ([]SelectItem, error) {
 }
 
 // GetPeopleCompany - get all peoples from company
-func (e *Edb) GetPeopleCompany(id int64) ([]People, error) {
+func (e *Edb) GetPeopleCompany(id int64) ([]PeopleCompany, error) {
 	stmt, err := e.db.Prepare(`SELECT
 		p.id,
 		p.name,
@@ -258,14 +258,14 @@ func (e *Edb) GetPeopleCompany(id int64) ([]People, error) {
 	ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetPeopleCompany e.db.Prepare ", err)
-		return []People{}, err
+		return []PeopleCompany{}, err
 	}
 	rows, err := stmt.Query(id)
 	if err != nil {
 		log.Println("GetPeopleCompany e.db.Query ", err)
-		return []People{}, err
+		return []PeopleCompany{}, err
 	}
-	peoples, err := scanPeoples(rows, "company")
+	peoples, err := scanPeoplesCompany(rows)
 	return peoples, err
 }
 
