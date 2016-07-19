@@ -7,19 +7,19 @@ import (
 
 // Company is struct for company
 type Company struct {
-	ID        int64      `sql:"id" json:"id"`
-	Name      string     `sql:"name" json:"name"`
-	Address   string     `sql:"address, null" json:"address"`
-	Scope     Scope      `sql:"-"`
-	ScopeID   int64      `sql:"scope_id, null" json:"scope_id"`
-	Note      string     `sql:"note, null" json:"note"`
-	Emails    []Email    `sql:"-"`
-	Phones    []Phone    `sql:"-"`
-	Faxes     []Phone    `sql:"-"`
-	Practices []Practice `sql:"-"`
-	Peoples   []People   `sql:"-"`
-	CreatedAt string     `sql:"created_at" json:"created_at"`
-	UpdatedAt string     `sql:"updated_at" json:"updated_at"`
+	ID        int64           `sql:"id" json:"id"`
+	Name      string          `sql:"name" json:"name"`
+	Address   string          `sql:"address, null" json:"address"`
+	Scope     Scope           `sql:"-"`
+	ScopeID   int64           `sql:"scope_id, null" json:"scope_id"`
+	Note      string          `sql:"note, null" json:"note"`
+	Emails    []Email         `sql:"-"`
+	Phones    []Phone         `sql:"-"`
+	Faxes     []Phone         `sql:"-"`
+	Practices []Practice      `sql:"-"`
+	Peoples   []PeopleCompany `sql:"-"`
+	CreatedAt string          `sql:"created_at" json:"created_at"`
+	UpdatedAt string          `sql:"updated_at" json:"updated_at"`
 }
 
 func scanCompany(row *sql.Row) (Company, error) {
