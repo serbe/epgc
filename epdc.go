@@ -14,6 +14,12 @@ type Edb struct {
 	log bool
 }
 
+// SelectItem - struct for select element
+type SelectItem struct {
+	ID   int64  `json:"id"`
+	Name string `json:"name"`
+}
+
 // InitDB initialize database
 func InitDB(dbname string, user string, password string, sslmode string, logsql bool) (*Edb, error) {
 	e := new(Edb)
