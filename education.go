@@ -10,10 +10,10 @@ import (
 // Education - struct for education
 type Education struct {
 	ID        int64  `sql:"id" json:"id" `
-	StartDate string `sql:"start_date" json:"start-date"`
-	EndDate   string `sql:"end_date" json:"end-date"`
-	StartStr  string `sql:"-" json:"start-str"`
-	EndStr    string `sql:"-" json:"end-str"`
+	StartDate string `sql:"start_date" json:"start_date"`
+	EndDate   string `sql:"end_date" json:"end_date"`
+	StartStr  string `sql:"-" json:"start_str"`
+	EndStr    string `sql:"-" json:"end_str"`
 	Note      string `sql:"note, null" json:"note"`
 	CreatedAt string `sql:"created_at" json:"created_at"`
 	UpdatedAt string `sql:"updated_at" json:"updated_at"`

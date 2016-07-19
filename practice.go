@@ -12,12 +12,12 @@ import (
 type Practice struct {
 	ID             int64   `sql:"id" json:"id"`
 	Company        Company `sql:"-"`
-	CompanyID      int64   `sql:"company_id, null" json:"company-id"`
+	CompanyID      int64   `sql:"company_id, null" json:"company_id"`
 	Kind           Kind    `sql:"-"`
-	KindID         int64   `sql:"kind_id, null" json:"kind-id"`
+	KindID         int64   `sql:"kind_id, null" json:"kind_id"`
 	Topic          string  `sql:"topic, null" json:"topic"`
-	DateOfPractice string  `sql:"date_of_practice, null" json:"date-of-practice"`
-	DateStr        string  `sql:"-" json:"date-str"`
+	DateOfPractice string  `sql:"date_of_practice, null" json:"date_of_practice"`
+	DateStr        string  `sql:"-" json:"date_str"`
 	Note           string  `sql:"note, null" json:"note"`
 	CreatedAt      string  `sql:"created_at" json:"created_at"`
 	UpdatedAt      string  `sql:"updated_at" json:"updated_at"`

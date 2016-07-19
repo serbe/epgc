@@ -11,7 +11,7 @@ type Company struct {
 	Name      string     `sql:"name" json:"name"`
 	Address   string     `sql:"address, null" json:"address"`
 	Scope     Scope      `sql:"-"`
-	ScopeID   int64      `sql:"scope_id, null" json:"scope-id"`
+	ScopeID   int64      `sql:"scope_id, null" json:"scope_id"`
 	Note      string     `sql:"note, null" json:"note"`
 	Emails    []Email    `sql:"-"`
 	Phones    []Phone    `sql:"-"`

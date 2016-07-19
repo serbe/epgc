@@ -8,8 +8,8 @@ import (
 // Phone - struct for phone
 type Phone struct {
 	ID        int64  `sql:"id" json:"id"`
-	CompanyID int64  `sql:"company_id, pk, null" json:"company-id"`
-	PeopleID  int64  `sql:"people_id, pk, null" json:"people-id"`
+	CompanyID int64  `sql:"company_id, pk, null" json:"company_id"`
+	PeopleID  int64  `sql:"people_id, pk, null" json:"people_id"`
 	Phone     int64  `sql:"phone, null" json:"phone"`
 	Fax       bool   `sql:"fax, null" json:"fax"`
 	CreatedAt string `sql:"created_at" json:"created_at"`
