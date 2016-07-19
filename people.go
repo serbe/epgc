@@ -13,13 +13,13 @@ type People struct {
 	ID         int64       `sql:"id" json:"id"`
 	Name       string      `sql:"name" json:"name"`
 	Company    Company     `sql:"-"`
-	CompanyID  int64       `sql:"company_id, null" json:"company-id"`
+	CompanyID  int64       `sql:"company_id, null" json:"company_id"`
 	Post       Post        `sql:"-"`
-	PostID     int64       `sql:"post_id, null" json:"post-id"`
+	PostID     int64       `sql:"post_id, null" json:"post_id"`
 	PostGO     Post        `sql:"-"`
-	PostGOID   int64       `sql:"post_go_id, null" json:"post-go-id"`
+	PostGOID   int64       `sql:"post_go_id, null" json:"post_go_id"`
 	Rank       Rank        `sql:"-"`
-	RankID     int64       `sql:"rank_id, null" json:"rank-id"`
+	RankID     int64       `sql:"rank_id, null" json:"rank_id"`
 	Birthday   string      `sql:"birthday, null" json:"birthday"`
 	Note       string      `sql:"note, null" json:"note"`
 	Emails     []Email     `sql:"-"`
@@ -28,6 +28,24 @@ type People struct {
 	Educations []Education `sql:"-"`
 	CreatedAt  string      `sql:"created_at" json:"created_at"`
 	UpdatedAt  string      `sql:"updated_at" json:"updated_at"`
+}
+
+// PeopleList is struct for people list
+type PeopleList struct {
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	CompanyName string `json:"company_name"`
+	PostName    string `json:"post_name"`
+	Phones      string `json:"phones"`
+	Faxes       string `json:"faxes"`
+}
+
+// PeopleCompany is struct for company
+type PeopleCompany struct {
+	ID         int64  `json:"id"`
+	Name       string `json:"name"`
+	PostName   string `json:"post_name"`
+	PostGOName string `json:"post_go_name"`
 }
 
 func scanPeople(row *sql.Row) (People, error) {
@@ -66,8 +84,8 @@ func scanPeople(row *sql.Row) (People, error) {
 	return people, nil
 }
 
-func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
-	var peoples []People
+func scanPeoplesList(rows *sql.Rows) ([]PeopleList, error) {
+	var peoples []PeopleList
 	for rows.Next() {
 		var (
 			sID          sql.NullInt64
@@ -76,35 +94,40 @@ func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
 			sPostName    sql.NullString
 			sPhones      sql.NullString
 			sFaxes       sql.NullString
-			people       People
+			people       PeopleList
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sID, &sName, &sCompanyName, &sPostName, &sPhones, &sFaxes)
-			if err != nil {
-				log.Println("scanPeople rows.Scan list ", err)
-				return peoples, err
-			}
-			people.Company.Name = n2s(sCompanyName)
-			people.Post.Name = n2s(sPostName)
-			people.Phones = n2phones(sPhones)
-			people.Faxes = n2faxes(sFaxes)
-		case "select":
-			err := rows.Scan(&sID, &sName)
-			if err != nil {
-				log.Println("scanPeople rows.Scan select ", err)
-				return peoples, err
-			}
-			// if len(people.Name) > 210 {
-			// 	people.Name = people.Name[0:210]
-			// }
-		case "company":
-			err := rows.Scan(&sID, &sName, &sPostName)
-			if err != nil {
-				log.Println("scanPeople rows.Scan select ", err)
-				return peoples, err
-			}
-			people.Post.Name = n2s(sPostName)
+		err := rows.Scan(&sID, &sName, &sCompanyName, &sPostName, &sPhones, &sFaxes)
+		if err != nil {
+			log.Println("scanPeoplesList rows.Scan ", err)
+			return peoples, err
+		}
+		people.ID = n2i(sID)
+		people.Name = n2s(sName)
+		people.CompanyName = n2s(sCompanyName)
+		people.PostName = n2s(sPostName)
+		people.Phones = n2s(sPhones)
+		people.Faxes = n2s(sFaxes)
+		peoples = append(peoples, people)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanPeoplesList rows.Err ", err)
+	}
+	return peoples, err
+}
+
+func scanPeoplesSelect(rows *sql.Rows) ([]SelectItem, error) {
+	var peoples []SelectItem
+	for rows.Next() {
+		var (
+			sID    sql.NullInt64
+			sName  sql.NullString
+			people SelectItem
+		)
+		err := rows.Scan(&sID, &sName)
+		if err != nil {
+			log.Println("scanPeoplesSelect rows.Scan ", err)
+			return peoples, err
 		}
 		people.ID = n2i(sID)
 		people.Name = n2s(sName)
@@ -112,7 +135,35 @@ func scanPeoples(rows *sql.Rows, opt string) ([]People, error) {
 	}
 	err := rows.Err()
 	if err != nil {
-		log.Println("scanPeoples rows.Err ", err)
+		log.Println("scanPeoplesSelect rows.Err ", err)
+	}
+	return peoples, err
+}
+
+func scanPeoplesCompany(rows *sql.Rows) ([]PeopleCompany, error) {
+	var peoples []PeopleCompany
+	for rows.Next() {
+		var (
+			sID         sql.NullInt64
+			sName       sql.NullString
+			sPostName   sql.NullString
+			sPostGOName sql.NullString
+			people      PeopleCompany
+		)
+		err := rows.Scan(&sID, &sName, &sPostName, &sPostGOName)
+		if err != nil {
+			log.Println("scanPeoplesCompany rows.Scan ", err)
+			return peoples, err
+		}
+		people.ID = n2i(sID)
+		people.Name = n2s(sName)
+		people.PostName = n2s(sPostName)
+		people.PostGOName = n2s(sPostGOName)
+		peoples = append(peoples, people)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanPeoplesCompany rows.Err ", err)
 	}
 	return peoples, err
 }
@@ -152,7 +203,7 @@ func (e *Edb) GetPeople(id int64) (People, error) {
 }
 
 // GetPeopleList - get all peoples for list
-func (e *Edb) GetPeopleList() ([]People, error) {
+func (e *Edb) GetPeopleList() ([]PeopleList, error) {
 	rows, err := e.db.Query(`SELECT
 		p.id,
 		p.name,
@@ -170,14 +221,14 @@ func (e *Edb) GetPeopleList() ([]People, error) {
 	ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetPeopleList e.db.Query ", err)
-		return []People{}, err
+		return []PeopleList{}, err
 	}
-	peoples, err := scanPeoples(rows, "list")
+	peoples, err := scanPeoplesList(rows)
 	return peoples, err
 }
 
 // GetPeopleSelect - get all peoples for select
-func (e *Edb) GetPeopleSelect() ([]People, error) {
+func (e *Edb) GetPeopleSelect() ([]SelectItem, error) {
 	rows, err := e.db.Query(`SELECT
 		p.id,
 		p.name
@@ -186,9 +237,9 @@ func (e *Edb) GetPeopleSelect() ([]People, error) {
 	ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetPeopleSelect e.db.Query ", err)
-		return []People{}, err
+		return []SelectItem{}, err
 	}
-	peoples, err := scanPeoples(rows, "select")
+	peoples, err := scanPeoplesSelect(rows)
 	return peoples, err
 }
 
@@ -198,9 +249,11 @@ func (e *Edb) GetPeopleCompany(id int64) ([]People, error) {
 		p.id,
 		p.name,
 		po.name AS post_name
+		pog.name AS post_go_name
 	FROM
 		peoples AS p
 	LEFT JOIN posts AS po ON p.post_id = po.id
+	LEFT JOIN posts AS pog ON p.post_go_id = pog.id
 	WHERE p.company_id = $1
 	ORDER BY name ASC`)
 	if err != nil {
