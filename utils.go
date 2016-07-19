@@ -74,6 +74,10 @@ func n2s(val sql.NullString) string {
 	return val.String
 }
 
+func n2as(val sql.NullString) []string {
+	return strings.Split(val.String, ",")
+}
+
 func n2i(val sql.NullInt64) int64 {
 	return val.Int64
 }

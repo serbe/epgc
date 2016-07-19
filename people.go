@@ -32,12 +32,12 @@ type People struct {
 
 // PeopleList is struct for people list
 type PeopleList struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	CompanyName string `json:"company_name"`
-	PostName    string `json:"post_name"`
-	Phones      string `json:"phones"`
-	Faxes       string `json:"faxes"`
+	ID          int64    `json:"id"`
+	Name        string   `json:"name"`
+	CompanyName string   `json:"company_name"`
+	PostName    string   `json:"post_name"`
+	Phones      []string `json:"phones"`
+	Faxes       []string `json:"faxes"`
 }
 
 // PeopleCompany is struct for company
@@ -105,8 +105,8 @@ func scanPeoplesList(rows *sql.Rows) ([]PeopleList, error) {
 		people.Name = n2s(sName)
 		people.CompanyName = n2s(sCompanyName)
 		people.PostName = n2s(sPostName)
-		people.Phones = n2s(sPhones)
-		people.Faxes = n2s(sFaxes)
+		people.Phones = n2as(sPhones)
+		people.Faxes = n2as(sFaxes)
 		peoples = append(peoples, people)
 	}
 	err := rows.Err()
