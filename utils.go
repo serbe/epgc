@@ -78,6 +78,14 @@ func n2as(val sql.NullString) []string {
 	return strings.Split(val.String, ",")
 }
 
+func n2ads(val sql.NullString) []string {
+	spl := strings.Split(val.String, ",")
+	for i, s := range spl {
+		spl[i] = s2sd(s)
+	}
+	return spl
+}
+
 func n2i(val sql.NullInt64) int64 {
 	return val.Int64
 }
