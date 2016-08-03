@@ -248,7 +248,7 @@ func (e *Edb) GetPeopleCompany(id int64) ([]PeopleCompany, error) {
 	stmt, err := e.db.Prepare(`SELECT
 		p.id,
 		p.name,
-		po.name AS post_name
+		po.name AS post_name,
 		pog.name AS post_go_name
 	FROM
 		peoples AS p
