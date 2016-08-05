@@ -142,13 +142,13 @@ func (e *Edb) GetPostList() ([]PostList, error) {
 }
 
 // GetPostSelect - get all post for select
-func (e *Edb) GetPostSelect(g bool) ([]Post, error) {
+func (e *Edb) GetPostSelect(g bool) ([]SelectItem, error) {
 	rows, err := e.db.Query(`SELECT id, name FROM posts WHERE go=$1 ORDER BY name ASC`, g)
 	if err != nil {
 		log.Println("GetPostSelect e.db.Query ", err)
-		return []Post{}, err
+		return []SelectItem{}, err
 	}
-	posts, err := scanPosts(rows, "select")
+	posts, err := scanPostsSelect(rows)
 	return posts, err
 }
 
