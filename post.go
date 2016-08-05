@@ -15,6 +15,13 @@ type Post struct {
 	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
+// PostList - struct for post list
+type PostList struct {
+	ID   int64  `sql:"id" json:"id"`
+	Name string `sql:"name" json:"name"`
+	GO   bool   `sql:"go" json:"go"`
+}
+
 func scanPost(row *sql.Row) (Post, error) {
 	var (
 		sid   sql.NullInt64
@@ -45,33 +52,70 @@ func scanPosts(rows *sql.Rows, opt string) ([]Post, error) {
 			snote sql.NullString
 			post  Post
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sid, &sname, &sgo, &snote)
-			if err != nil {
-				log.Println("scanPosts rows.Scan list ", err)
-				return posts, err
-			}
-			post.Name = n2s(sname)
-			post.GO = n2b(sgo)
-			post.Note = n2s(snote)
-		case "select":
-			err := rows.Scan(&sid, &sname)
-			if err != nil {
-				log.Println("scanPosts rows.Scan select ", err)
-				return posts, err
-			}
-			post.Name = n2s(sname)
-			// if len(post.Name) > 210 {
-			// 	post.Name = post.Name[0:210]
-			// }
+		err := rows.Scan(&sid, &sname, &sgo, &snote)
+		if err != nil {
+			log.Println("scanPosts rows.Scan ", err)
+			return posts, err
 		}
+		post.Name = n2s(sname)
+		post.GO = n2b(sgo)
+		post.Note = n2s(snote)
 		post.ID = n2i(sid)
 		posts = append(posts, post)
 	}
 	err := rows.Err()
 	if err != nil {
 		log.Println("scanPosts rows.Err ", err)
+	}
+	return posts, err
+}
+
+func scanPostsList(rows *sql.Rows) ([]PostList, error) {
+	var posts []PostList
+	for rows.Next() {
+		var (
+			sid   sql.NullInt64
+			sname sql.NullString
+			sgo   sql.NullBool
+			post  PostList
+		)
+		err := rows.Scan(&sid, &sname, &sgo)
+		if err != nil {
+			log.Println("scanPostsList rows.Scan ", err)
+			return posts, err
+		}
+		post.ID = n2i(sid)
+		post.Name = n2s(sname)
+		post.GO = n2b(sgo)
+		posts = append(posts, post)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanPostsList rows.Err ", err)
+	}
+	return posts, err
+}
+
+func scanPostsSelect(rows *sql.Rows) ([]SelectItem, error) {
+	var posts []SelectItem
+	for rows.Next() {
+		var (
+			sid   sql.NullInt64
+			sname sql.NullString
+			post  SelectItem
+		)
+		err := rows.Scan(&sid, &sname)
+		if err != nil {
+			log.Println("scanPostsSelect rows.Scan ", err)
+			return posts, err
+		}
+		post.ID = n2i(sid)
+		post.Name = n2s(sname)
+		posts = append(posts, post)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanPostsSelect rows.Err ", err)
 	}
 	return posts, err
 }
@@ -87,13 +131,13 @@ func (e *Edb) GetPost(id int64) (Post, error) {
 }
 
 // GetPostList - get all post for list
-func (e *Edb) GetPostList() ([]Post, error) {
+func (e *Edb) GetPostList() ([]PostList, error) {
 	rows, err := e.db.Query(`SELECT id, name, go, note FROM posts ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetPostList e.db.Query ", err)
-		return []Post{}, err
+		return []PostList{}, err
 	}
-	posts, err := scanPosts(rows, "list")
+	posts, err := scanPostsList(rows)
 	return posts, err
 }
 
