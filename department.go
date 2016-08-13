@@ -32,7 +32,7 @@ func scanDepartment(row *sql.Row) (Department, error) {
 	return department, nil
 }
 
-func scanDepartments(rows *sql.Rows, opt string) ([]Department, error) {
+func scanDepartments(rows *sql.Rows) ([]Department, error) {
 	var departments []Department
 	for rows.Next() {
 		var (
@@ -41,32 +41,43 @@ func scanDepartments(rows *sql.Rows, opt string) ([]Department, error) {
 			sNote      sql.NullString
 			department Department
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sID, &sName, &sNote)
-			if err != nil {
-				log.Println("scanDepartments list rows.Scan ", err)
-				return departments, err
-			}
-			department.Name = n2s(sName)
-			department.Note = n2s(sNote)
-		case "select":
-			err := rows.Scan(&sID, &sName)
-			if err != nil {
-				log.Println("scanDepartments select rows.Scan ", err)
-				return departments, err
-			}
-			department.Name = n2s(sName)
-			// if len(department.Name) > 210 {
-			// 	department.Name = department.Name[0:210]
-			// }
+		err := rows.Scan(&sID, &sName, &sNote)
+		if err != nil {
+			log.Println("scanDepartments list rows.Scan ", err)
+			return departments, err
 		}
 		department.ID = n2i(sID)
+		department.Name = n2s(sName)
+		department.Note = n2s(sNote)
 		departments = append(departments, department)
 	}
 	err := rows.Err()
 	if err != nil {
 		log.Println("scanDepartments rows.Err ", err)
+	}
+	return departments, err
+}
+
+func scanDepartmentsSelect(rows *sql.Rows) ([]SelectItem, error) {
+	var departments []SelectItem
+	for rows.Next() {
+		var (
+			sID        sql.NullInt64
+			sName      sql.NullString
+			department SelectItem
+		)
+		err := rows.Scan(&sID, &sName)
+		if err != nil {
+			log.Println("scanDepartmentsSelect rows.Scan ", err)
+			return departments, err
+		}
+		department.ID = n2i(sID)
+		department.Name = n2s(sName)
+		departments = append(departments, department)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanDepartmentsSelect rows.Err ", err)
 	}
 	return departments, err
 }
@@ -88,18 +99,18 @@ func (e *Edb) GetDepartmentList() ([]Department, error) {
 		log.Println("GetDepartmentList e.db.Query ", err)
 		return []Department{}, err
 	}
-	departments, err := scanDepartments(rows, "list")
+	departments, err := scanDepartments(rows)
 	return departments, err
 }
 
 // GetDepartmentSelect - get all department for select
-func (e *Edb) GetDepartmentSelect() ([]Department, error) {
+func (e *Edb) GetDepartmentSelect() ([]SelectItem, error) {
 	rows, err := e.db.Query(`SELECT id, name FROM departments ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetDepartmentSelect e.db.Query ", err)
-		return []Department{}, err
+		return []SelectItem{}, err
 	}
-	departments, err := scanDepartments(rows, "select")
+	departments, err := scanDepartmentsSelect(rows)
 	return departments, err
 }
 
