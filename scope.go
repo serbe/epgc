@@ -16,19 +16,19 @@ type Scope struct {
 
 func scanScope(row *sql.Row) (Scope, error) {
 	var (
-		sid   sql.NullInt64
-		sname sql.NullString
-		snote sql.NullString
+		sID   sql.NullInt64
+		sName sql.NullString
+		sNote sql.NullString
 		scope Scope
 	)
-	err := row.Scan(&sid, &sname, &snote)
+	err := row.Scan(&sID, &sName, &sNote)
 	if err != nil {
 		log.Println("scanScope row.Scan ", err)
 		return scope, err
 	}
-	scope.ID = n2i(sid)
-	scope.Name = n2s(sname)
-	scope.Note = n2s(snote)
+	scope.ID = n2i(sID)
+	scope.Name = n2s(sName)
+	scope.Note = n2s(sNote)
 	return scope, nil
 }
 
@@ -36,32 +36,32 @@ func scanScopes(rows *sql.Rows, opt string) ([]Scope, error) {
 	var scopes []Scope
 	for rows.Next() {
 		var (
-			sid   sql.NullInt64
-			sname sql.NullString
-			snote sql.NullString
+			sID   sql.NullInt64
+			sName sql.NullString
+			sNote sql.NullString
 			scope Scope
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sid, &sname, &snote)
+			err := rows.Scan(&sID, &sName, &sNote)
 			if err != nil {
 				log.Println("scanScopes rows.Scan list ", err)
 				return []Scope{}, err
 			}
-			scope.Name = n2s(sname)
-			scope.Note = n2s(snote)
+			scope.Name = n2s(sName)
+			scope.Note = n2s(sNote)
 		case "select":
-			err := rows.Scan(&sid, &sname)
+			err := rows.Scan(&sID, &sName)
 			if err != nil {
 				log.Println("scanScopes rows.Scan select ", err)
 				return []Scope{}, err
 			}
-			scope.Name = n2s(sname)
+			scope.Name = n2s(sName)
 			// if len(scope.Name) > 210 {
 			// 	scope.Name = scope.Name[0:210]
 			// }
 		}
-		scope.ID = n2i(sid)
+		scope.ID = n2i(sID)
 		scopes = append(scopes, scope)
 	}
 	err := rows.Err()

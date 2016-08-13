@@ -24,21 +24,21 @@ type PostList struct {
 
 func scanPost(row *sql.Row) (Post, error) {
 	var (
-		sid   sql.NullInt64
-		sname sql.NullString
+		sID   sql.NullInt64
+		sName sql.NullString
 		sgo   sql.NullBool
-		snote sql.NullString
+		sNote sql.NullString
 		post  Post
 	)
-	err := row.Scan(&sid, &sname, &sgo, &snote)
+	err := row.Scan(&sID, &sName, &sgo, &sNote)
 	if err != nil {
 		log.Println("scanPost row.Scan ", err)
 		return post, err
 	}
-	post.ID = n2i(sid)
-	post.Name = n2s(sname)
+	post.ID = n2i(sID)
+	post.Name = n2s(sName)
 	post.GO = n2b(sgo)
-	post.Note = n2s(snote)
+	post.Note = n2s(sNote)
 	return post, nil
 }
 
@@ -46,21 +46,21 @@ func scanPosts(rows *sql.Rows, opt string) ([]Post, error) {
 	var posts []Post
 	for rows.Next() {
 		var (
-			sid   sql.NullInt64
-			sname sql.NullString
+			sID   sql.NullInt64
+			sName sql.NullString
 			sgo   sql.NullBool
-			snote sql.NullString
+			sNote sql.NullString
 			post  Post
 		)
-		err := rows.Scan(&sid, &sname, &sgo, &snote)
+		err := rows.Scan(&sID, &sName, &sgo, &sNote)
 		if err != nil {
 			log.Println("scanPosts rows.Scan ", err)
 			return posts, err
 		}
-		post.Name = n2s(sname)
+		post.Name = n2s(sName)
 		post.GO = n2b(sgo)
-		post.Note = n2s(snote)
-		post.ID = n2i(sid)
+		post.Note = n2s(sNote)
+		post.ID = n2i(sID)
 		posts = append(posts, post)
 	}
 	err := rows.Err()
@@ -74,18 +74,18 @@ func scanPostsList(rows *sql.Rows) ([]PostList, error) {
 	var posts []PostList
 	for rows.Next() {
 		var (
-			sid   sql.NullInt64
-			sname sql.NullString
+			sID   sql.NullInt64
+			sName sql.NullString
 			sgo   sql.NullBool
 			post  PostList
 		)
-		err := rows.Scan(&sid, &sname, &sgo)
+		err := rows.Scan(&sID, &sName, &sgo)
 		if err != nil {
 			log.Println("scanPostsList rows.Scan ", err)
 			return posts, err
 		}
-		post.ID = n2i(sid)
-		post.Name = n2s(sname)
+		post.ID = n2i(sID)
+		post.Name = n2s(sName)
 		post.GO = n2b(sgo)
 		posts = append(posts, post)
 	}
@@ -100,17 +100,17 @@ func scanPostsSelect(rows *sql.Rows) ([]SelectItem, error) {
 	var posts []SelectItem
 	for rows.Next() {
 		var (
-			sid   sql.NullInt64
-			sname sql.NullString
+			sID   sql.NullInt64
+			sName sql.NullString
 			post  SelectItem
 		)
-		err := rows.Scan(&sid, &sname)
+		err := rows.Scan(&sID, &sName)
 		if err != nil {
 			log.Println("scanPostsSelect rows.Scan ", err)
 			return posts, err
 		}
-		post.ID = n2i(sid)
-		post.Name = n2s(sname)
+		post.ID = n2i(sID)
+		post.Name = n2s(sName)
 		posts = append(posts, post)
 	}
 	err := rows.Err()

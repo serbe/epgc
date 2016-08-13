@@ -1,0 +1,1 @@
+ALTER TABLE emails RENAME COLUMN people_id TO contact_id;

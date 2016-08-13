@@ -56,7 +56,7 @@ func (e *Edb) createAllTables() error {
 	if err != nil {
 		return err
 	}
-	err = e.peopleCreateTable()
+	err = e.contactCreateTable()
 	if err != nil {
 		return err
 	}

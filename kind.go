@@ -16,19 +16,19 @@ type Kind struct {
 
 func scanKind(row *sql.Row) (Kind, error) {
 	var (
-		sid   sql.NullInt64
-		sname sql.NullString
-		snote sql.NullString
+		sID   sql.NullInt64
+		sName sql.NullString
+		sNote sql.NullString
 		kind  Kind
 	)
-	err := row.Scan(&sid, &sname, &snote)
+	err := row.Scan(&sID, &sName, &sNote)
 	if err != nil {
 		log.Println("scanKind row.Scan ", err)
 		return kind, err
 	}
-	kind.ID = n2i(sid)
-	kind.Name = n2s(sname)
-	kind.Note = n2s(snote)
+	kind.ID = n2i(sID)
+	kind.Name = n2s(sName)
+	kind.Note = n2s(sNote)
 	return kind, nil
 }
 
@@ -36,32 +36,32 @@ func scanKinds(rows *sql.Rows, opt string) ([]Kind, error) {
 	var kinds []Kind
 	for rows.Next() {
 		var (
-			sid   sql.NullInt64
-			sname sql.NullString
-			snote sql.NullString
+			sID   sql.NullInt64
+			sName sql.NullString
+			sNote sql.NullString
 			kind  Kind
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sid, &sname, &snote)
+			err := rows.Scan(&sID, &sName, &sNote)
 			if err != nil {
 				log.Println("scanKinds list rows.Scan ", err)
 				return kinds, err
 			}
-			kind.Name = n2s(sname)
-			kind.Note = n2s(snote)
+			kind.Name = n2s(sName)
+			kind.Note = n2s(sNote)
 		case "select":
-			err := rows.Scan(&sid, &sname)
+			err := rows.Scan(&sID, &sName)
 			if err != nil {
 				log.Println("scanKinds select rows.Scan ", err)
 				return kinds, err
 			}
-			kind.Name = n2s(sname)
+			kind.Name = n2s(sName)
 			// if len(kind.Name) > 210 {
 			// 	kind.Name = kind.Name[0:210]
 			// }
 		}
-		kind.ID = n2i(sid)
+		kind.ID = n2i(sID)
 		kinds = append(kinds, kind)
 	}
 	err := rows.Err()

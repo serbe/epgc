@@ -16,19 +16,19 @@ type Rank struct {
 
 func scanRank(row *sql.Row) (Rank, error) {
 	var (
-		sid   sql.NullInt64
-		sname sql.NullString
-		snote sql.NullString
+		sID   sql.NullInt64
+		sName sql.NullString
+		sNote sql.NullString
 		rank  Rank
 	)
-	err := row.Scan(&sid, &sname, &snote)
+	err := row.Scan(&sID, &sName, &sNote)
 	if err != nil {
 		log.Println("scanRank row.Scan ", err)
 		return rank, err
 	}
-	rank.ID = n2i(sid)
-	rank.Name = n2s(sname)
-	rank.Note = n2s(snote)
+	rank.ID = n2i(sID)
+	rank.Name = n2s(sName)
+	rank.Note = n2s(sNote)
 	return rank, nil
 }
 
@@ -36,32 +36,32 @@ func scanRanks(rows *sql.Rows, opt string) ([]Rank, error) {
 	var ranks []Rank
 	for rows.Next() {
 		var (
-			sid   sql.NullInt64
-			sname sql.NullString
-			snote sql.NullString
+			sID   sql.NullInt64
+			sName sql.NullString
+			sNote sql.NullString
 			rank  Rank
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sid, &sname, &snote)
+			err := rows.Scan(&sID, &sName, &sNote)
 			if err != nil {
 				log.Println("scanRanks rows.Scan list ", err)
 				return ranks, err
 			}
-			rank.Name = n2s(sname)
-			rank.Note = n2s(snote)
+			rank.Name = n2s(sName)
+			rank.Note = n2s(sNote)
 		case "select":
-			err := rows.Scan(&sid, &sname)
+			err := rows.Scan(&sID, &sName)
 			if err != nil {
 				log.Println("scanRanks rows.Scan select ", err)
 				return ranks, err
 			}
-			rank.Name = n2s(sname)
+			rank.Name = n2s(sName)
 			// if len(rank.Name) > 210 {
 			// 	rank.Name = rank.Name[0:210]
 			// }
 		}
-		rank.ID = n2i(sid)
+		rank.ID = n2i(sID)
 		ranks = append(ranks, rank)
 	}
 	err := rows.Err()
