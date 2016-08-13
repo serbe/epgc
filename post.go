@@ -26,18 +26,18 @@ func scanPost(row *sql.Row) (Post, error) {
 	var (
 		sID   sql.NullInt64
 		sName sql.NullString
-		sgo   sql.NullBool
+		sGo   sql.NullBool
 		sNote sql.NullString
 		post  Post
 	)
-	err := row.Scan(&sID, &sName, &sgo, &sNote)
+	err := row.Scan(&sID, &sName, &sGo, &sNote)
 	if err != nil {
 		log.Println("scanPost row.Scan ", err)
 		return post, err
 	}
 	post.ID = n2i(sID)
 	post.Name = n2s(sName)
-	post.GO = n2b(sgo)
+	post.GO = n2b(sGo)
 	post.Note = n2s(sNote)
 	return post, nil
 }
@@ -48,17 +48,17 @@ func scanPosts(rows *sql.Rows, opt string) ([]Post, error) {
 		var (
 			sID   sql.NullInt64
 			sName sql.NullString
-			sgo   sql.NullBool
+			sGo   sql.NullBool
 			sNote sql.NullString
 			post  Post
 		)
-		err := rows.Scan(&sID, &sName, &sgo, &sNote)
+		err := rows.Scan(&sID, &sName, &sGo, &sNote)
 		if err != nil {
 			log.Println("scanPosts rows.Scan ", err)
 			return posts, err
 		}
 		post.Name = n2s(sName)
-		post.GO = n2b(sgo)
+		post.GO = n2b(sGo)
 		post.Note = n2s(sNote)
 		post.ID = n2i(sID)
 		posts = append(posts, post)
@@ -76,17 +76,17 @@ func scanPostsList(rows *sql.Rows) ([]PostList, error) {
 		var (
 			sID   sql.NullInt64
 			sName sql.NullString
-			sgo   sql.NullBool
+			sGo   sql.NullBool
 			post  PostList
 		)
-		err := rows.Scan(&sID, &sName, &sgo)
+		err := rows.Scan(&sID, &sName, &sGo)
 		if err != nil {
 			log.Println("scanPostsList rows.Scan ", err)
 			return posts, err
 		}
 		post.ID = n2i(sID)
 		post.Name = n2s(sName)
-		post.GO = n2b(sgo)
+		post.GO = n2b(sGo)
 		posts = append(posts, post)
 	}
 	err := rows.Err()

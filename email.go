@@ -20,10 +20,10 @@ func scanEmail(row *sql.Row) (Email, error) {
 		sID        sql.NullInt64
 		sCompanyID sql.NullInt64
 		sContactID sql.NullInt64
-		semail     sql.NullString
+		sEmail     sql.NullString
 		email      Email
 	)
-	err := row.Scan(&sID, &sCompanyID, &sContactID, &semail)
+	err := row.Scan(&sID, &sCompanyID, &sContactID, &sEmail)
 	if err != nil {
 		log.Println("scanEmail row.Scan ", err)
 		return email, err
@@ -31,7 +31,7 @@ func scanEmail(row *sql.Row) (Email, error) {
 	email.ID = n2i(sID)
 	email.CompanyID = n2i(sCompanyID)
 	email.ContactID = n2i(sContactID)
-	email.Email = n2s(semail)
+	email.Email = n2s(sEmail)
 	return email, nil
 }
 
@@ -40,24 +40,24 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 	for rows.Next() {
 		var (
 			sID    sql.NullInt64
-			semail sql.NullString
+			sEmail sql.NullString
 			email  Email
 		)
 		switch opt {
 		case "list":
-			err := rows.Scan(&sID, &semail)
+			err := rows.Scan(&sID, &sEmail)
 			if err != nil {
 				log.Println("scanEmails rows.Scan ", err)
 				return emails, err
 			}
-			email.Email = n2s(semail)
+			email.Email = n2s(sEmail)
 		case "select":
-			err := rows.Scan(&sID, &semail)
+			err := rows.Scan(&sID, &sEmail)
 			if err != nil {
 				log.Println("scanEmails rows.Scan ", err)
 				return emails, err
 			}
-			email.Email = n2s(semail)
+			email.Email = n2s(sEmail)
 			// if len(email.Email) > 210 {
 			// 	email.Email = email.Email[0:210]
 			// }
