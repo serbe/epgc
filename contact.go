@@ -217,7 +217,7 @@ func (e *Edb) GetContactList() ([]ContactList, error) {
 		c.id,
 		c.name,
 		co.name AS company_name,
-    d.name AS department_name,
+    	d.name AS department_name,
 		po.name AS post_name,
 		array_to_string(array_agg(DISTINCT ph.phone),',') AS phone,
 		array_to_string(array_agg(DISTINCT f.phone),',') AS fax
@@ -228,7 +228,7 @@ func (e *Edb) GetContactList() ([]ContactList, error) {
 	LEFT JOIN posts AS po ON c.post_id = po.id
 	LEFT JOIN phones AS ph ON c.id = ph.contact_id AND ph.fax = false
 	LEFT JOIN phones AS f ON c.id = f.contact_id AND f.fax = true
-	GROUP BY c.id, co.name, po.name
+	GROUP BY c.id, d.name, co.name, po.name
 	ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetContactList e.db.Query ", err)
