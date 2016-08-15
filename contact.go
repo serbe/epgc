@@ -224,11 +224,11 @@ func (e *Edb) GetContactList() ([]ContactList, error) {
 	FROM
 		contacts AS c
 	LEFT JOIN companies AS co ON c.company_id = co.id
-  LEFT JOIN departments AS d ON c.department_id = d.id
+    LEFT JOIN departments AS d ON c.department_id = d.id
 	LEFT JOIN posts AS po ON c.post_id = po.id
 	LEFT JOIN phones AS ph ON c.id = ph.contact_id AND ph.fax = false
 	LEFT JOIN phones AS f ON c.id = f.contact_id AND f.fax = true
-	GROUP BY c.id, d.name, co.name, po.name
+	GROUP BY c.id, co.name, d.name, po.name
 	ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetContactList e.db.Query ", err)
