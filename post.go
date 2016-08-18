@@ -20,6 +20,7 @@ type PostList struct {
 	ID   int64  `sql:"id" json:"id"`
 	Name string `sql:"name" json:"name"`
 	GO   bool   `sql:"go" json:"go"`
+	Note string `sql:"note, null" json:"note"`
 }
 
 func scanPost(row *sql.Row) (Post, error) {
@@ -77,9 +78,10 @@ func scanPostsList(rows *sql.Rows) ([]PostList, error) {
 			sID   sql.NullInt64
 			sName sql.NullString
 			sGo   sql.NullBool
+			sNote sql.NullString
 			post  PostList
 		)
-		err := rows.Scan(&sID, &sName, &sGo)
+		err := rows.Scan(&sID, &sName, &sGo, &sNote)
 		if err != nil {
 			log.Println("scanPostsList rows.Scan ", err)
 			return posts, err
@@ -87,6 +89,7 @@ func scanPostsList(rows *sql.Rows) ([]PostList, error) {
 		post.ID = n2i(sID)
 		post.Name = n2s(sName)
 		post.GO = n2b(sGo)
+		post.Note = n2s(sNote)
 		posts = append(posts, post)
 	}
 	err := rows.Err()
