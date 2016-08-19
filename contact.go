@@ -34,13 +34,13 @@ type Contact struct {
 
 // ContactList is struct for contact list
 type ContactList struct {
-	ID             int64    `json:"id"`
-	Name           string   `json:"name"`
-	CompanyName    string   `json:"company_name"`
-	DepartmentName string   `json:"department_name"`
-	PostName       string   `json:"post_name"`
-	Phones         []string `json:"phones"`
-	Faxes          []string `json:"faxes"`
+	ID          int64    `json:"id"`
+	Name        string   `json:"name"`
+	CompanyID   int64    `json:"company_id"`
+	CompanyName string   `json:"company_name"`
+	PostName    string   `json:"post_name"`
+	Phones      []string `json:"phones"`
+	Faxes       []string `json:"faxes"`
 }
 
 // ContactCompany is struct for company
@@ -66,8 +66,7 @@ func scanContact(row *sql.Row) (Contact, error) {
 		sEmails       sql.NullString
 		sPhones       sql.NullString
 		sFaxes        sql.NullString
-		// seducations sql.NullString
-		contact Contact
+		contact       Contact
 	)
 	err := row.Scan(&sID, &sName, &sCompanyID, &sDepartmentID, &sPostID, &sPostGOID, &sRankID, &sBirthday, &sNote, &sEmails, &sPhones, &sFaxes)
 	if err != nil {
@@ -94,24 +93,24 @@ func scanContactsList(rows *sql.Rows) ([]ContactList, error) {
 	var contacts []ContactList
 	for rows.Next() {
 		var (
-			sID             sql.NullInt64
-			sName           sql.NullString
-			sCompanyName    sql.NullString
-			sDepartmentName sql.NullString
-			sPostName       sql.NullString
-			sPhones         sql.NullString
-			sFaxes          sql.NullString
-			contact         ContactList
+			sID          sql.NullInt64
+			sName        sql.NullString
+			sCompanyID   sql.NullInt64
+			sCompanyName sql.NullString
+			sPostName    sql.NullString
+			sPhones      sql.NullString
+			sFaxes       sql.NullString
+			contact      ContactList
 		)
-		err := rows.Scan(&sID, &sName, &sCompanyName, &sDepartmentName, &sPostName, &sPhones, &sFaxes)
+		err := rows.Scan(&sID, &sName, &sCompanyID, &sCompanyName, &sPostName, &sPhones, &sFaxes)
 		if err != nil {
 			log.Println("scanContactsList rows.Scan ", err)
 			return contacts, err
 		}
 		contact.ID = n2i(sID)
 		contact.Name = n2s(sName)
+		contact.CompanyID = n2i(sCompanyID)
 		contact.CompanyName = n2s(sCompanyName)
-		contact.DepartmentName = n2s(sDepartmentName)
 		contact.PostName = n2s(sPostName)
 		contact.Phones = n2as(sPhones)
 		contact.Faxes = n2as(sFaxes)
@@ -181,26 +180,33 @@ func (e *Edb) GetContact(id int64) (Contact, error) {
 	if id == 0 {
 		return Contact{}, nil
 	}
-	stmt, err := e.db.Prepare(`SELECT
-		c.id,
-		c.name,
-		c.company_id,
-    c.department_id,
-		c.post_id,
-		c.post_go_id,
-		c.rank_id,
-		c.birthday,
-		c.note,
-		array_to_string(array_agg(DISTINCT e.email),',') AS email,
-		array_to_string(array_agg(DISTINCT p.phone),',') AS phone,
-		array_to_string(array_agg(DISTINCT f.phone),',') AS fax
-	FROM
-		contacts AS c
-	LEFT JOIN emails AS e ON c.id = e.contact_id
-	LEFT JOIN phones AS p ON c.id = p.contact_id AND p.fax = false
-	LEFT JOIN phones AS f ON c.id = f.contact_id AND f.fax = true
-	WHERE c.id = $1
-	GROUP BY c.id`)
+	stmt, err := e.db.Prepare(`
+		SELECT
+			c.id,
+			c.name,
+			c.company_id,
+			c.department_id,
+			c.post_id,
+			c.post_go_id,
+			c.rank_id,
+			c.birthday,
+			c.note,
+			array_to_string(array_agg(DISTINCT e.email),',') AS email,
+			array_to_string(array_agg(DISTINCT p.phone),',') AS phone,
+			array_to_string(array_agg(DISTINCT f.phone),',') AS fax
+		FROM
+			contacts AS c
+		LEFT JOIN
+			emails AS e ON c.id = e.contact_id
+		LEFT JOIN
+			phones AS p ON c.id = p.contact_id AND p.fax = false
+		LEFT JOIN
+			phones AS f ON c.id = f.contact_id AND f.fax = true
+		WHERE
+			c.id = $1
+		GROUP BY
+			c.id
+	`)
 	if err != nil {
 		log.Println("GetContact e.db.Prepare ", err)
 		return Contact{}, err
@@ -213,23 +219,32 @@ func (e *Edb) GetContact(id int64) (Contact, error) {
 
 // GetContactList - get all contacts for list
 func (e *Edb) GetContactList() ([]ContactList, error) {
-	rows, err := e.db.Query(`SELECT
-		c.id,
-		c.name,
-		co.name AS company_name,
-    	d.name AS department_name,
-		po.name AS post_name,
-		array_to_string(array_agg(DISTINCT ph.phone),',') AS phone,
-		array_to_string(array_agg(DISTINCT f.phone),',') AS fax
-	FROM
-		contacts AS c
-	LEFT JOIN companies AS co ON c.company_id = co.id
-    LEFT JOIN departments AS d ON c.department_id = d.id
-	LEFT JOIN posts AS po ON c.post_id = po.id
-	LEFT JOIN phones AS ph ON c.id = ph.contact_id AND ph.fax = false
-	LEFT JOIN phones AS f ON c.id = f.contact_id AND f.fax = true
-	GROUP BY c.id, co.name, d.name, po.name
-	ORDER BY name ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			c.id,
+			c.name,
+			co.id AS company_id,
+			co.name AS company_name,
+			po.name AS post_name,
+			array_to_string(array_agg(DISTINCT ph.phone),',') AS phone,
+			array_to_string(array_agg(DISTINCT f.phone),',') AS fax
+		FROM
+			contacts AS c
+		LEFT JOIN
+			companies AS co ON c.company_id = co.id
+		LEFT JOIN
+			posts AS po ON c.post_id = po.id
+		LEFT JOIN
+			phones AS ph ON c.id = ph.contact_id AND ph.fax = false
+		LEFT JOIN
+			phones AS f ON c.id = f.contact_id AND f.fax = true
+		GROUP BY
+			c.id,
+			co.id,
+			po.name
+		ORDER BY
+			name ASC
+	`)
 	if err != nil {
 		log.Println("GetContactList e.db.Query ", err)
 		return []ContactList{}, err
@@ -240,12 +255,15 @@ func (e *Edb) GetContactList() ([]ContactList, error) {
 
 // GetContactSelect - get all contacts for select
 func (e *Edb) GetContactSelect() ([]SelectItem, error) {
-	rows, err := e.db.Query(`SELECT
-		c.id,
-		c.name
-	FROM
-		contacts AS c
-	ORDER BY name ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			c.id,
+			c.name
+		FROM
+			contacts AS c
+		ORDER BY
+			name ASC
+	`)
 	if err != nil {
 		log.Println("GetContactSelect e.db.Query ", err)
 		return []SelectItem{}, err
@@ -256,17 +274,23 @@ func (e *Edb) GetContactSelect() ([]SelectItem, error) {
 
 // GetContactCompany - get all contacts from company
 func (e *Edb) GetContactCompany(id int64) ([]ContactCompany, error) {
-	stmt, err := e.db.Prepare(`SELECT
-		c.id,
-		c.name,
-		po.name AS post_name,
-		pog.name AS post_go_name
-	FROM
-		contacts AS c
-	LEFT JOIN posts AS po ON c.post_id = po.id
-	LEFT JOIN posts AS pog ON c.post_go_id = pog.id
-	WHERE c.company_id = $1
-	ORDER BY name ASC`)
+	stmt, err := e.db.Prepare(`
+		SELECT
+			c.id,
+			c.name,
+			po.name AS post_name,
+			pog.name AS post_go_name
+		FROM
+			contacts AS c
+		LEFT JOIN
+			posts AS po ON c.post_id = po.id
+		LEFT JOIN
+			posts AS pog ON c.post_go_id = pog.id
+		WHERE
+			c.company_id = $1
+		ORDER BY
+			name ASC
+	`)
 	if err != nil {
 		log.Println("GetContactCompany e.db.Prepare ", err)
 		return []ContactCompany{}, err
@@ -282,7 +306,33 @@ func (e *Edb) GetContactCompany(id int64) ([]ContactCompany, error) {
 
 // CreateContact - create new contact
 func (e *Edb) CreateContact(contact Contact) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO contacts(name, company_id, department_id, post_id, post_go_id, rank_id, birthday, note, created_at) VALUES($1, $2, $3, $4, $5, $6, $7, $8, now()) RETURNING id`)
+	stmt, err := e.db.Prepare(`
+		INSERT INTO
+			contacts (
+				name,
+				company_id,
+				department_id,
+				post_id,
+				post_go_id,
+				rank_id,
+				birthday,
+				note,
+				created_at
+			)
+		VALUES (
+			$1,
+			$2,
+			$3,
+			$4,
+			$5,
+			$6,
+			$7,
+			$8,
+			now()
+		)
+		RETURNING
+			id
+	`)
 	if err != nil {
 		log.Println("CreateContact e.db.Prepare ", err)
 		return 0, err
@@ -301,7 +351,22 @@ func (e *Edb) CreateContact(contact Contact) (int64, error) {
 
 // UpdateContact - save contact changes
 func (e *Edb) UpdateContact(contact Contact) error {
-	stmt, err := e.db.Prepare(`UPDATE contacts SET name=$2, company_id=$3, department_id=$4, post_id=$5, post_go_id=$5, rank_id=$6, birthday=$8, note=$9, updated_at = now() WHERE id = $1`)
+	stmt, err := e.db.Prepare(`
+		UPDATE
+			contacts
+		SET
+			name=$2,
+			company_id=$3,
+			department_id=$4,
+			post_id=$5,
+			post_go_id=$6,
+			rank_id=$7,
+			birthday=$8,
+			note=$9,
+			updated_at = now()
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("UpdateContact e.db.Prepare ", err)
 		return err
@@ -328,7 +393,12 @@ func (e *Edb) DeleteContact(id int64) error {
 		log.Println("DeleteContact DeleteAllContactPhones ", err)
 		return err
 	}
-	e.db.Exec(`DELETE FROM contacts WHERE id = $1`, id)
+	e.db.Exec(`
+		DELETE FROM
+			contacts
+		WHERE
+			id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteContact e.db.Exec ", id, err)
 	}
@@ -336,7 +406,22 @@ func (e *Edb) DeleteContact(id int64) error {
 }
 
 func (e *Edb) contactCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS contacts (id bigserial primary key, name text, company_id bigint, post_id bigint, post_go_id bigint, rank_id bigint, birthday date, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone, department_id bigint)`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			contacts (
+				id bigserial primary key,
+				name text,
+				company_id bigint,
+				department_id bigint,
+				post_id bigint,
+				post_go_id bigint,
+				rank_id bigint,
+				birthday date,
+				note text,
+				created_at TIMESTAMP without time zone,
+				updated_at TIMESTAMP without time zone
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("contactCreateTable ", err)

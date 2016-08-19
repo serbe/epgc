@@ -77,7 +77,17 @@ func (e *Edb) GetEmail(id int64) (Email, error) {
 	if id == 0 {
 		return Email{}, nil
 	}
-	stmt, err := e.db.Prepare(`SELECT id, company_id, contact_id, email FROM emails WHERE id = $1`)
+	stmt, err := e.db.Prepare(`
+		SELECT
+			id,
+			company_id,
+			contact_id,
+			email
+		FROM
+			emails
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("GetEmail e.db.Prepare", err)
 		return Email{}, err
@@ -89,7 +99,15 @@ func (e *Edb) GetEmail(id int64) (Email, error) {
 
 // GetEmailList - get all emails for list
 func (e *Edb) GetEmailList() ([]Email, error) {
-	rows, err := e.db.Query(`SELECT id, email FROM emails ORDER BY name ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			email
+		FROM
+			emails
+		ORDER BY
+			name ASC
+	`)
 	if err != nil {
 		log.Println("GetEmailList e.db.Query ", err)
 		return []Email{}, err
@@ -103,7 +121,17 @@ func (e *Edb) GetCompanyEmails(id int64) ([]Email, error) {
 	if id == 0 {
 		return []Email{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, email FROM emails WHERE company_id = $1 ORDER BY name ASC`, id)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			email
+		FROM
+			emails
+		WHERE
+			company_id = $1
+		ORDER BY
+			name ASC
+	`, id)
 	if err != nil {
 		log.Println("GetCompanyEmails e.db.Query ", err)
 		return []Email{}, err
@@ -117,7 +145,17 @@ func (e *Edb) GetContactEmails(id int64) ([]Email, error) {
 	if id == 0 {
 		return []Email{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, email FROM emails WHERE contact_id = $1 ORDER BY name ASC`, id)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			email
+		FROM
+			emails
+		WHERE
+			contact_id = $1
+		ORDER BY
+			name ASC
+	`, id)
 	if err != nil {
 		log.Println("GetContactEmails e.db.Query ", err)
 		return []Email{}, err
@@ -128,7 +166,23 @@ func (e *Edb) GetContactEmails(id int64) ([]Email, error) {
 
 // CreateEmail - create new email
 func (e *Edb) CreateEmail(email Email) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO emails(company_id, contact_id, email, created_at) VALUES($1, $2, $3, now()) RETURNING id`)
+	stmt, err := e.db.Prepare(`
+		INSERT INTO
+			emails (
+				company_id,
+				contact_id,
+				email,
+				created_at
+			)
+		VALUES (
+			$1,
+			$2,
+			$3,
+			now()
+		)
+		RETURNING
+			id
+	`)
 	if err != nil {
 		log.Println("CreateEmail e.db.Prepare ", err)
 		return 0, err
@@ -179,7 +233,17 @@ func (e *Edb) CreateContactEmails(contact Contact) error {
 
 // UpdateEmail - save email changes
 func (e *Edb) UpdateEmail(email Email) error {
-	stmt, err := e.db.Prepare(`UPDATE emails SET company_id=$2, contact_id=$3, email=$4, updated_at = now() WHERE id=$1`)
+	stmt, err := e.db.Prepare(`
+		UPDATE
+			emails
+		SET
+			company_id = $2,
+			contact_id = $3,
+			email = $4,
+			updated_at = now()
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("UpdateEmail e.db.Prepare ", err)
 		return err
@@ -196,7 +260,12 @@ func (e *Edb) DeleteEmail(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM emails WHERE id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			emails
+		WHERE
+			id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteEmail ", err)
 	}
@@ -208,7 +277,12 @@ func (e *Edb) DeleteCompanyEmails(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM emails WHERE company_id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			emails
+		WHERE
+			company_id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteCompanyEmails ", id, err)
 	}
@@ -220,7 +294,12 @@ func (e *Edb) DeleteContactEmails(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM emails WHERE contact_id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			emails
+		WHERE
+			contact_id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteContactEmails ", err)
 	}
@@ -228,7 +307,17 @@ func (e *Edb) DeleteContactEmails(id int64) error {
 }
 
 func (e *Edb) emailCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS emails (id bigserial primary key, company_id bigint, contact_id bigint, email text, created_at timestamp without time zone, updated_at timestamp without time zone)`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			emails (
+				id bigserial primary key,
+				company_id bigint,
+				contact_id bigint,
+				email text,
+				created_at timestamp without time zone,
+				updated_at timestamp without time zone
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("emailCreateTable ", err)

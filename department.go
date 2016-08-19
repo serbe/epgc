@@ -87,14 +87,33 @@ func (e *Edb) GetDepartment(id int64) (Department, error) {
 	if id == 0 {
 		return Department{}, nil
 	}
-	row := e.db.QueryRow(`SELECT id, name, note FROM departments WHERE id = $1`, id)
+	row := e.db.QueryRow(`
+		SELECT
+			id,
+			name,
+			note
+		FROM
+			departments
+		WHERE
+			id = $1
+	`, id)
 	department, err := scanDepartment(row)
 	return department, err
 }
 
 // GetDepartmentList - get all department for list
 func (e *Edb) GetDepartmentList() ([]Department, error) {
-	rows, err := e.db.Query(`SELECT id, name, note FROM departments ORDER BY name ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			name,
+			note
+		FROM
+			departments
+		ORDER BY
+			name
+		ASC
+	`)
 	if err != nil {
 		log.Println("GetDepartmentList e.db.Query ", err)
 		return []Department{}, err
@@ -105,7 +124,15 @@ func (e *Edb) GetDepartmentList() ([]Department, error) {
 
 // GetDepartmentSelect - get all department for select
 func (e *Edb) GetDepartmentSelect() ([]SelectItem, error) {
-	rows, err := e.db.Query(`SELECT id, name FROM departments ORDER BY name ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			name
+		FROM
+			departments
+		ORDER BY
+			name ASC
+	`)
 	if err != nil {
 		log.Println("GetDepartmentSelect e.db.Query ", err)
 		return []SelectItem{}, err
@@ -116,7 +143,21 @@ func (e *Edb) GetDepartmentSelect() ([]SelectItem, error) {
 
 // CreateDepartment - create new department
 func (e *Edb) CreateDepartment(department Department) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO departments(name, note, created_at) VALUES($1, $2, now()) RETURNING id`)
+	stmt, err := e.db.Prepare(`
+		INSERT INTO
+			departments (
+				name,
+				note,
+				created_at
+			)
+		VALUES (
+			$1,
+			$2,
+			now()
+		)
+		RETURNING
+			id
+	`)
 	if err != nil {
 		log.Println("CreateDepartment e.db.Prepare ", err)
 		return 0, err
@@ -131,7 +172,16 @@ func (e *Edb) CreateDepartment(department Department) (int64, error) {
 
 // UpdateDepartment - save department changes
 func (e *Edb) UpdateDepartment(s Department) error {
-	stmt, err := e.db.Prepare(`UPDATE departments SET name=$2, note=$3, updated_at = now() WHERE id = $1`)
+	stmt, err := e.db.Prepare(`
+		UPDATE
+			departments
+		SET
+			name=$2,
+			note=$3,
+			updated_at = now()
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("UpdateDepartment e.db.Prepare ", err)
 		return err
@@ -148,7 +198,12 @@ func (e *Edb) DeleteDepartment(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM departments WHERE id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			departments
+		WHERE
+			id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteDepartment e.db.Exec ", id, err)
 	}
@@ -156,7 +211,16 @@ func (e *Edb) DeleteDepartment(id int64) error {
 }
 
 func (e *Edb) departmentCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS departments (id bigserial primary key, name text, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			departments (
+				id bigserial primary key,
+				name text,
+				note text,
+				created_at TIMESTAMP without time zone,
+				updated_at TIMESTAMP without time zone
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("departmentCreateTable e.db.Exec ", err)
