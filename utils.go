@@ -21,16 +21,16 @@ func s2n(val string) sql.NullString {
 	return s2n
 }
 
-func d2n(val time.Time) pq.NullTime {
-	var d2n pq.NullTime
-	if val.Format("02.01.2006") == "01.01.0001" {
-		d2n.Valid = false
-	} else {
-		d2n.Valid = true
-		d2n.Time = val
-	}
-	return d2n
-}
+// func d2n(val time.Time) pq.NullTime {
+// 	var d2n pq.NullTime
+// 	if val.Format("02.01.2006") == "01.01.0001" {
+// 		d2n.Valid = false
+// 	} else {
+// 		d2n.Valid = true
+// 		d2n.Time = val
+// 	}
+// 	return d2n
+// }
 
 func sd2n(val string) pq.NullTime {
 	var d2n pq.NullTime
@@ -59,16 +59,16 @@ func i2n(val int64) sql.NullInt64 {
 	return i2n
 }
 
-func b2n(val bool) sql.NullBool {
-	var b2n sql.NullBool
-	if val == false {
-		b2n.Valid = false
-	} else {
-		b2n.Valid = true
-		b2n.Bool = val
-	}
-	return b2n
-}
+// func b2n(val bool) sql.NullBool {
+// 	var b2n sql.NullBool
+// 	if val == false {
+// 		b2n.Valid = false
+// 	} else {
+// 		b2n.Valid = true
+// 		b2n.Bool = val
+// 	}
+// 	return b2n
+// }
 
 func n2s(val sql.NullString) string {
 	return val.String
@@ -94,9 +94,9 @@ func n2b(val sql.NullBool) bool {
 	return val.Bool
 }
 
-func n2d(val pq.NullTime) time.Time {
-	return val.Time
-}
+// func n2d(val pq.NullTime) time.Time {
+// 	return val.Time
+// }
 
 func n2sd(val pq.NullTime) string {
 	var str string
@@ -171,25 +171,25 @@ func n2faxes(faxes sql.NullString) []Phone {
 	return ff
 }
 
-func n2practices(practices sql.NullString) []Practice {
-	var (
-		p  string
-		ps []string
-		pp []Practice
-	)
-	p = n2s(practices)
-	if p == "" {
-		return pp
-	}
-	ps = strings.Split(p, ",")
-	for _, p = range ps {
-		var practice Practice
-		practice.DateOfPractice = p
-		practice.DateStr = s2sd(p)
-		pp = append(pp, practice)
-	}
-	return pp
-}
+// func n2practices(practices sql.NullString) []Practice {
+// 	var (
+// 		p  string
+// 		ps []string
+// 		pp []Practice
+// 	)
+// 	p = n2s(practices)
+// 	if p == "" {
+// 		return pp
+// 	}
+// 	ps = strings.Split(p, ",")
+// 	for _, p = range ps {
+// 		var practice Practice
+// 		practice.DateOfPractice = p
+// 		practice.DateStr = s2sd(p)
+// 		pp = append(pp, practice)
+// 	}
+// 	return pp
+// }
 
 // func toInt(b bool) int {
 // 	if b {
@@ -198,10 +198,10 @@ func n2practices(practices sql.NullString) []Practice {
 // 	return 0
 // }
 
-func s2d(val string) time.Time {
-	t, _ := time.Parse("2006-01-02", val)
-	return t
-}
+// func s2d(val string) time.Time {
+// 	t, _ := time.Parse("2006-01-02", val)
+// 	return t
+// }
 
 func s2sd(val string) string {
 	var result string
@@ -213,10 +213,10 @@ func s2sd(val string) string {
 	return result
 }
 
-func d2s(val time.Time) string {
-	str := val.Format("02.01.2006")
-	return str
-}
+// func d2s(val time.Time) string {
+// 	str := val.Format("02.01.2006")
+// 	return str
+// }
 
 func int64InSlice(a int64, list []int64) bool {
 	for _, b := range list {
