@@ -32,7 +32,7 @@ func scanScope(row *sql.Row) (Scope, error) {
 	return scope, nil
 }
 
-func scanScopes(rows *sql.Rows, opt string) ([]Scope, error) {
+func scanScopesList(rows *sql.Rows) ([]Scope, error) {
 	var scopes []Scope
 	for rows.Next() {
 		var (
@@ -41,32 +41,43 @@ func scanScopes(rows *sql.Rows, opt string) ([]Scope, error) {
 			sNote sql.NullString
 			scope Scope
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sID, &sName, &sNote)
-			if err != nil {
-				log.Println("scanScopes rows.Scan list ", err)
-				return []Scope{}, err
-			}
-			scope.Name = n2s(sName)
-			scope.Note = n2s(sNote)
-		case "select":
-			err := rows.Scan(&sID, &sName)
-			if err != nil {
-				log.Println("scanScopes rows.Scan select ", err)
-				return []Scope{}, err
-			}
-			scope.Name = n2s(sName)
-			// if len(scope.Name) > 210 {
-			// 	scope.Name = scope.Name[0:210]
-			// }
+		err := rows.Scan(&sID, &sName, &sNote)
+		if err != nil {
+			log.Println("scanScopesList rows.Scan list ", err)
+			return []Scope{}, err
 		}
+		scope.Name = n2s(sName)
+		scope.Note = n2s(sNote)
 		scope.ID = n2i(sID)
 		scopes = append(scopes, scope)
 	}
 	err := rows.Err()
 	if err != nil {
-		log.Println("scanScopes rows.Err ", err)
+		log.Println("scanScopesList rows.Err ", err)
+	}
+	return scopes, err
+}
+
+func scanScopesSelect(rows *sql.Rows) ([]SelectItem, error) {
+	var scopes []SelectItem
+	for rows.Next() {
+		var (
+			sID   sql.NullInt64
+			sName sql.NullString
+			scope SelectItem
+		)
+		err := rows.Scan(&sID, &sName)
+		if err != nil {
+			log.Println("scanScopesSelect rows.Scan select ", err)
+			return []SelectItem{}, err
+		}
+		scope.Name = n2s(sName)
+		scope.ID = n2i(sID)
+		scopes = append(scopes, scope)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanScopesSelect rows.Err ", err)
 	}
 	return scopes, err
 }
@@ -88,18 +99,18 @@ func (e *Edb) GetScopeList() ([]Scope, error) {
 		log.Println("GetScopeList e.db.Query ", err)
 		return []Scope{}, err
 	}
-	scopes, err := scanScopes(rows, "list")
+	scopes, err := scanScopesList(rows)
 	return scopes, err
 }
 
 // GetScopeSelect - get all scope for select
-func (e *Edb) GetScopeSelect() ([]Scope, error) {
+func (e *Edb) GetScopeSelect() ([]SelectItem, error) {
 	rows, err := e.db.Query(`SELECT id, name FROM scopes ORDER BY name ASC`)
 	if err != nil {
 		log.Println("GetScopeSelect e.db.Query ", err)
-		return []Scope{}, err
+		return []SelectItem{}, err
 	}
-	scopes, err := scanScopes(rows, "select")
+	scopes, err := scanScopesSelect(rows)
 	return scopes, err
 }
 
@@ -144,7 +155,17 @@ func (e *Edb) DeleteScope(id int64) error {
 }
 
 func (e *Edb) scopeCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS scopes (id bigserial primary key, name text, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			scopes (
+				id bigserial primary key,
+				name text,
+				note text,
+				created_at TIMESTAMP without time zone,
+				updated_at TIMESTAMP without time zone,
+				UNIQUE (name)
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("scopeCreateTable e.db.Exec ", err)

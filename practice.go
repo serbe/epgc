@@ -217,7 +217,25 @@ func (e *Edb) GetPracticeNear() ([]Practice, error) {
 
 // CreatePractice - create new practice
 func (e *Edb) CreatePractice(practice Practice) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO practices(company_id, kind_id, topic, date_of_practice, note, created_at) VALUES($1, $2, $3, $4, $5, now()) RETURNING id`)
+	stmt, err := e.db.Prepare(`
+		INSERT INTO
+			practices (
+				company_id,
+				kind_id,
+				topic,
+				date_of_practice,
+				note,
+				created_at
+			) VALUES (
+				$1,
+				$2,
+				$3,
+				$4,
+				$5,
+				now()
+			)
+		RETURNING id
+	`)
 	if err != nil {
 		log.Println("CreatePractice e.db.Prepare ", err)
 		return 0, err
@@ -228,7 +246,19 @@ func (e *Edb) CreatePractice(practice Practice) (int64, error) {
 
 // UpdatePractice - save practice changes
 func (e *Edb) UpdatePractice(practice Practice) error {
-	stmt, err := e.db.Prepare(`UPDATE practices SET company_id=$2, kind_id=$3, topic=$4, date_of_practice=$5, note=$6, updated_at = now() WHERE id=$1`)
+	stmt, err := e.db.Prepare(`
+		UPDATE
+			practices
+		SET
+			company_id = $2,
+			kind_id = $3,
+			topic = $4,
+			date_of_practice = $5,
+			note = $6,
+			updated_at = now()
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("UpdatePractice e.db.Prepare ", err)
 		return err
@@ -242,7 +272,12 @@ func (e *Edb) DeletePractice(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM practices WHERE id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			practices
+		WHERE
+			id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeletePractice e.db.Exec: ", id, err)
 		return fmt.Errorf("DeletePractice e.db.Exec: %s", err)
@@ -251,7 +286,19 @@ func (e *Edb) DeletePractice(id int64) error {
 }
 
 func (e *Edb) practiceCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS practices (id bigserial primary key, company_id bigint, kind_id bigint, topic text, date_of_practice date, note text, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			practices (
+				id bigserial primary key,
+				company_id bigint,
+				kind_id bigint,
+				topic text,
+				date_of_practice date,
+				note text,
+				created_at TIMESTAMP without time zone,
+				updated_at TIMESTAMP without time zone
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("practiceCreateTable e.db.Exec: ", err)

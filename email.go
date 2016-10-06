@@ -35,7 +35,7 @@ func scanEmail(row *sql.Row) (Email, error) {
 	return email, nil
 }
 
-func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
+func scanEmails(rows *sql.Rows) ([]Email, error) {
 	var emails []Email
 	for rows.Next() {
 		var (
@@ -43,25 +43,12 @@ func scanEmails(rows *sql.Rows, opt string) ([]Email, error) {
 			sEmail sql.NullString
 			email  Email
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sID, &sEmail)
-			if err != nil {
-				log.Println("scanEmails rows.Scan ", err)
-				return emails, err
-			}
-			email.Email = n2s(sEmail)
-		case "select":
-			err := rows.Scan(&sID, &sEmail)
-			if err != nil {
-				log.Println("scanEmails rows.Scan ", err)
-				return emails, err
-			}
-			email.Email = n2s(sEmail)
-			// if len(email.Email) > 210 {
-			// 	email.Email = email.Email[0:210]
-			// }
+		err := rows.Scan(&sID, &sEmail)
+		if err != nil {
+			log.Println("scanEmails rows.Scan ", err)
+			return emails, err
 		}
+		email.Email = n2s(sEmail)
 		email.ID = n2i(sID)
 		emails = append(emails, email)
 	}
@@ -97,8 +84,8 @@ func (e *Edb) GetEmail(id int64) (Email, error) {
 	return email, nil
 }
 
-// GetEmailList - get all emails for list
-func (e *Edb) GetEmailList() ([]Email, error) {
+// GetEmails - get all emails for list
+func (e *Edb) GetEmails() ([]Email, error) {
 	rows, err := e.db.Query(`
 		SELECT
 			id,
@@ -112,7 +99,7 @@ func (e *Edb) GetEmailList() ([]Email, error) {
 		log.Println("GetEmailList e.db.Query ", err)
 		return []Email{}, err
 	}
-	emails, err := scanEmails(rows, "list")
+	emails, err := scanEmails(rows)
 	return emails, err
 }
 
@@ -136,7 +123,7 @@ func (e *Edb) GetCompanyEmails(id int64) ([]Email, error) {
 		log.Println("GetCompanyEmails e.db.Query ", err)
 		return []Email{}, err
 	}
-	emails, err := scanEmails(rows, "list")
+	emails, err := scanEmails(rows)
 	return emails, err
 }
 
@@ -160,7 +147,7 @@ func (e *Edb) GetContactEmails(id int64) ([]Email, error) {
 		log.Println("GetContactEmails e.db.Query ", err)
 		return []Email{}, err
 	}
-	emails, err := scanEmails(rows, "list")
+	emails, err := scanEmails(rows)
 	return emails, err
 }
 

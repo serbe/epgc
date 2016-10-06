@@ -419,7 +419,8 @@ func (e *Edb) contactCreateTable() error {
 				birthday date,
 				note text,
 				created_at TIMESTAMP without time zone,
-				updated_at TIMESTAMP without time zone
+				updated_at TIMESTAMP without time zone,
+				UNIQUE(name, birthday)
 			)
 	`
 	_, err := e.db.Exec(str)

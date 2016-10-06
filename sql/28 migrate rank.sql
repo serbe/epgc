@@ -1,0 +1,1 @@
+ALTER TABLE ranks ADD CONSTRAINT ranks_name_key UNIQUE (name);

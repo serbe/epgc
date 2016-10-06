@@ -39,7 +39,7 @@ func scanEducation(row *sql.Row) (Education, error) {
 	return education, nil
 }
 
-func scanEducations(rows *sql.Rows, opt string) ([]Education, error) {
+func scanEducationsList(rows *sql.Rows) ([]Education, error) {
 	var educations []Education
 	for rows.Next() {
 		var (
@@ -49,13 +49,10 @@ func scanEducations(rows *sql.Rows, opt string) ([]Education, error) {
 			sNote      sql.NullString
 			education  Education
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sID, &sStartDate, &sEndDate, &sNote)
-			if err != nil {
-				log.Println("scanEducations rows.Scan list ", err)
-				return educations, err
-			}
+		err := rows.Scan(&sID, &sStartDate, &sEndDate, &sNote)
+		if err != nil {
+			log.Println("scanEducationsList rows.Scan list ", err)
+			return educations, err
 		}
 		education.ID = n2i(sID)
 		education.StartDate = n2sd(sStartDate)
@@ -65,7 +62,33 @@ func scanEducations(rows *sql.Rows, opt string) ([]Education, error) {
 	}
 	err := rows.Err()
 	if err != nil {
-		log.Println("scanEducations rows.Err ", err)
+		log.Println("scanEducationsList rows.Err ", err)
+	}
+	return educations, err
+}
+
+func scanEducationsSelect(rows *sql.Rows) ([]Education, error) {
+	var educations []Education
+	for rows.Next() {
+		var (
+			sID        sql.NullInt64
+			sStartDate pq.NullTime
+			sEndDate   pq.NullTime
+			education  Education
+		)
+		err := rows.Scan(&sID, &sStartDate, &sEndDate)
+		if err != nil {
+			log.Println("scanEducationsSelect rows.Scan list ", err)
+			return educations, err
+		}
+		education.ID = n2i(sID)
+		education.StartDate = n2sd(sStartDate)
+		education.EndDate = n2sd(sEndDate)
+		educations = append(educations, education)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanEducationsSelect rows.Err ", err)
 	}
 	return educations, err
 }
@@ -114,7 +137,35 @@ func (e *Edb) GetEducationList() ([]Education, error) {
 		log.Println("GetEducationList e.db.Query ", err)
 		return []Education{}, err
 	}
-	educations, err := scanEducations(rows, "list")
+	educations, err := scanEducationsList(rows)
+	if err != nil {
+		log.Println("GetEducationList scanEducations ", err)
+		return []Education{}, err
+	}
+	for i := range educations {
+		educations[i].StartStr = setStrMonth(educations[i].StartDate)
+		educations[i].EndStr = setStrMonth(educations[i].EndDate)
+	}
+	return educations, err
+}
+
+// GetEducationSelect - get all education for select
+func (e *Edb) GetEducationSelect() ([]Education, error) {
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			start_date,
+			end_date,
+		FROM
+			educations
+		ORDER BY
+			start_date
+	`)
+	if err != nil {
+		log.Println("GetEducationList e.db.Query ", err)
+		return []Education{}, err
+	}
+	educations, err := scanEducationsSelect(rows)
 	if err != nil {
 		log.Println("GetEducationList scanEducations ", err)
 		return []Education{}, err

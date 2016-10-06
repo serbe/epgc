@@ -16,6 +16,12 @@ type Phone struct {
 	UpdatedAt string `sql:"updated_at" json:"updated_at"`
 }
 
+// PhoneSelect - struct for short phone
+type PhoneSelect struct {
+	ID    int64 `json:"id"`
+	Phone int64 `json:"phone"`
+}
+
 func scanPhone(row *sql.Row) (Phone, error) {
 	var (
 		sID        sql.NullInt64
@@ -38,7 +44,7 @@ func scanPhone(row *sql.Row) (Phone, error) {
 	return phone, nil
 }
 
-func scanPhones(rows *sql.Rows, opt string) ([]Phone, error) {
+func scanPhonesList(rows *sql.Rows) ([]Phone, error) {
 	var phones []Phone
 	for rows.Next() {
 		var (
@@ -49,22 +55,37 @@ func scanPhones(rows *sql.Rows, opt string) ([]Phone, error) {
 			sFax       sql.NullBool
 			phone      Phone
 		)
-		switch opt {
-		case "list":
-			err := rows.Scan(&sID, &sCompanyID, &sContactID, &sPhone, &sFax)
-			if err != nil {
-				log.Println("scanPhones rows.Scan list ", err)
-				return phones, err
-			}
-			phone.CompanyID = n2i(sCompanyID)
-			phone.ContactID = n2i(sContactID)
-			phone.Fax = n2b(sFax)
-		case "short":
-			err := rows.Scan(&sID, &sPhone)
-			if err != nil {
-				log.Println("scanPhones rows.Scan short ", err)
-				return phones, err
-			}
+		err := rows.Scan(&sID, &sCompanyID, &sContactID, &sPhone, &sFax)
+		if err != nil {
+			log.Println("scanPhonesList rows.Scan list ", err)
+			return phones, err
+		}
+		phone.CompanyID = n2i(sCompanyID)
+		phone.ContactID = n2i(sContactID)
+		phone.Fax = n2b(sFax)
+		phone.ID = n2i(sID)
+		phone.Phone = n2i(sPhone)
+		phones = append(phones, phone)
+	}
+	err := rows.Err()
+	if err != nil {
+		log.Println("scanPhonesList rows.Err ", err)
+	}
+	return phones, err
+}
+
+func scanPhonesSelect(rows *sql.Rows) ([]PhoneSelect, error) {
+	var phones []PhoneSelect
+	for rows.Next() {
+		var (
+			sID    sql.NullInt64
+			sPhone sql.NullInt64
+			phone  PhoneSelect
+		)
+		err := rows.Scan(&sID, &sPhone)
+		if err != nil {
+			log.Println("scanPhonesSelect rows.Scan short ", err)
+			return phones, err
 		}
 		phone.ID = n2i(sID)
 		phone.Phone = n2i(sPhone)
@@ -72,7 +93,7 @@ func scanPhones(rows *sql.Rows, opt string) ([]Phone, error) {
 	}
 	err := rows.Err()
 	if err != nil {
-		log.Println("scanPhones rows.Err ", err)
+		log.Println("scanPhonesSelect rows.Err ", err)
 	}
 	return phones, err
 }
@@ -82,7 +103,18 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 	if id == 0 {
 		return Phone{}, nil
 	}
-	stmt, err := e.db.Prepare(`SELECT id, company_id, contact_id, phone, fax FROM phones WHERE id = $1`)
+	stmt, err := e.db.Prepare(`
+		SELECT
+			id,
+			company_id,
+			contact_id,
+			phone,
+			fax
+		FROM
+			phones
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("GetPhone e.db.Prepare", err)
 		return Phone{}, err
@@ -94,74 +126,140 @@ func (e *Edb) GetPhone(id int64) (Phone, error) {
 
 // GetPhoneList - get all phones for list
 func (e *Edb) GetPhoneList() ([]Phone, error) {
-	rows, err := e.db.Query(`SELECT id, company_id, contact_id, phone, fax FROM phones ORDER BY phone ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			company_id,
+			contact_id,
+			phone,
+			fax
+		FROM
+			phones
+		ORDER BY
+			phone ASC`)
 	if err != nil {
 		log.Println("GetPhoneList e.db.Query ", err)
 		return []Phone{}, err
 	}
-	phones, err := scanPhones(rows, "list")
+	phones, err := scanPhonesList(rows)
 	return phones, err
 }
 
 // GetCompanyPhones - get all phones by company id
-func (e *Edb) GetCompanyPhones(id int64, fax bool) ([]Phone, error) {
+func (e *Edb) GetCompanyPhones(id int64, fax bool) ([]PhoneSelect, error) {
 	if id == 0 {
-		return []Phone{}, nil
+		return []PhoneSelect{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE company_id = $1 AND fax = $2 ORDER BY phone ASC`, id, fax)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			phone
+		FROM
+			phones
+		WHERE
+			company_id = $1 AND fax = $2
+		ORDER BY
+			phone ASC
+	`, id, fax)
 	if err != nil {
 		log.Println("GetCompanyPhones e.db.Query ", err)
-		return []Phone{}, err
+		return []PhoneSelect{}, err
 	}
-	phones, err := scanPhones(rows, "short")
+	phones, err := scanPhonesSelect(rows)
 	return phones, err
 }
 
 // GetContactPhones - get all phones by contact id
-func (e *Edb) GetContactPhones(id int64, fax bool) ([]Phone, error) {
+func (e *Edb) GetContactPhones(id int64, fax bool) ([]PhoneSelect, error) {
 	if id == 0 {
-		return []Phone{}, nil
+		return []PhoneSelect{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, phone FROM phones ORDER BY phone ASC WHERE contact_id = $1 AND fax = $2`, id, fax)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			phone
+		FROM
+			phones
+		ORDER BY
+			phone ASC
+		WHERE
+			contact_id = $1 AND fax = $2
+	`, id, fax)
 	if err != nil {
 		log.Println("GetContactPhones e.db.Query ", err)
-		return []Phone{}, err
+		return []PhoneSelect{}, err
 	}
-	phones, err := scanPhones(rows, "short")
+	phones, err := scanPhonesSelect(rows)
 	return phones, err
 }
 
 // GetCompanyPhonesAll - get all faxes or phones by company id and isfax
-func (e *Edb) GetCompanyPhonesAll(id int64, fax bool) ([]Phone, error) {
+func (e *Edb) GetCompanyPhonesAll(id int64, fax bool) ([]PhoneSelect, error) {
 	if id == 0 {
-		return []Phone{}, nil
+		return []PhoneSelect{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE company_id = $1 and fax = $2 ORDER BY phone ASC`, id, fax)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			phone
+		FROM
+			phones
+		WHERE
+			company_id = $1 and fax = $2
+		ORDER BY
+			phone ASC
+	`, id, fax)
 	if err != nil {
 		log.Println("GetCompanyPhonesAll e.db.Query ", err)
-		return []Phone{}, nil
+		return []PhoneSelect{}, nil
 	}
-	phones, err := scanPhones(rows, "short")
+	phones, err := scanPhonesSelect(rows)
 	return phones, err
 }
 
 // GetContactPhonesAll - get all phones and faxes by contact id
-func (e *Edb) GetContactPhonesAll(id int64, fax bool) ([]Phone, error) {
+func (e *Edb) GetContactPhonesAll(id int64, fax bool) ([]PhoneSelect, error) {
 	if id == 0 {
-		return []Phone{}, nil
+		return []PhoneSelect{}, nil
 	}
-	rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE contact_id = $1 and fax = $2 ORDER BY phone ASC`, id, fax)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			phone
+		FROM
+			phones
+		WHERE
+			contact_id = $1 and fax = $2
+		ORDER BY
+			phone ASC
+	`, id, fax)
 	if err != nil {
 		log.Println("GetContactPhonesAll e.db.Query ", err)
-		return []Phone{}, nil
+		return []PhoneSelect{}, nil
 	}
-	phones, err := scanPhones(rows, "short")
+	phones, err := scanPhonesSelect(rows)
 	return phones, err
 }
 
 // CreatePhone - create new phone
 func (e *Edb) CreatePhone(phone Phone) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO phones(company_id, contact_id, phone, fax, created_at) VALUES($1, $2, $3, $4, now()) RETURNING id`)
+	stmt, err := e.db.Prepare(`
+		INSERT INTO
+			phones (
+				company_id,
+				contact_id,
+				phone,
+				fax,
+				created_at
+			) VALUES (
+				$1,
+				$2,
+				$3,
+				$4,
+				now()
+			)
+		RETURNING id
+	`)
 	if err != nil {
 		log.Println("CreatePhone e.db.Prepare ", err)
 		return 0, err
@@ -184,7 +282,16 @@ func (e *Edb) CreateCompanyPhones(company Company, fax bool) error {
 	for _, value := range company.Phones {
 		var id int64
 		phone := Phone{}
-		err = e.db.QueryRow(`SELECT id FROM phones WHERE company_id = $1 and phone = $2 and fax = $3 RETURNING id`, company.ID, value.Phone, fax).Scan(&id)
+		err = e.db.QueryRow(`
+			SELECT
+				id
+			FROM
+				phones
+			WHERE
+				company_id = $1 and phone = $2 and fax = $3
+			RETURNING
+				id
+		`, company.ID, value.Phone, fax).Scan(&id)
 		if phone.ID == 0 {
 			value.CompanyID = company.ID
 			value.Fax = fax
@@ -213,7 +320,16 @@ func (e *Edb) CreateContactPhones(contact Contact, fax bool) error {
 	}
 	for _, value := range allPhones {
 		phone := Phone{}
-		err = e.db.QueryRow(`SELECT id FROM phones WHERE contact_id = $1 and phone = $2 and fax = $3 RETURNING id`, contact.ID, value.Phone, fax).Scan(&phone.ID)
+		err = e.db.QueryRow(`
+			SELECT
+				id
+			FROM
+				phones
+			WHERE
+				contact_id = $1 and phone = $2 and fax = $3
+			RETURNING
+				id
+		`, contact.ID, value.Phone, fax).Scan(&phone.ID)
 		if phone.ID == 0 {
 			value.ContactID = contact.ID
 			value.Fax = fax
@@ -242,25 +358,43 @@ func (e *Edb) CleanCompanyPhones(company Company, fax bool) error {
 		phones = append(phones, value.Phone)
 	}
 	if len(phones) == 0 {
-		_, err := e.db.Exec(`DELETE FROM phones WHERE company_id = $1 and fax = $2`, company.ID, fax)
+		_, err := e.db.Exec(`
+			DELETE FROM
+				phones
+			WHERE
+				company_id = $1 and fax = $2
+		`, company.ID, fax)
 		if err != nil {
 			log.Println("CleanCompanyPhones e.db.Exec ", err)
 			return err
 		}
 	} else {
-		rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE company_id = $1 and fax = $2`, company.ID, fax)
+		rows, err := e.db.Query(`
+			SELECT
+				id,
+				phone
+			FROM
+				phones
+			WHERE
+				company_id = $1 and fax = $2
+		`, company.ID, fax)
 		if err != nil {
 			log.Println("CleanCompanyPhones e.db.Query ", err)
 			return err
 		}
-		companyPhones, err := scanPhones(rows, "short")
+		companyPhones, err := scanPhonesSelect(rows)
 		if err != nil {
 			log.Println("CleanCompanyPhones scanPhones ", err)
 			return err
 		}
 		for _, value := range companyPhones {
 			if int64InSlice(value.Phone, phones) == false {
-				_, err = e.db.Exec(`DELETE FROM phones WHERE company_id = $1 and phone = $2 and fax = $3`, company.ID, value.Phone, fax)
+				_, err = e.db.Exec(`
+					DELETE FROM
+						phones
+					WHERE
+						company_id = $1 and phone = $2 and fax = $3
+				`, company.ID, value.Phone, fax)
 				if err != nil {
 					log.Println("CleanCompanyPhones e.db.Exec ", err)
 					return err
@@ -286,25 +420,43 @@ func (e *Edb) CleanContactPhones(contact Contact, fax bool) error {
 		phones = append(phones, value.Phone)
 	}
 	if len(phones) == 0 {
-		_, err := e.db.Exec(`DELETE FROM phones WHERE contact_id = $1 and fax = $2`, contact.ID, fax)
+		_, err := e.db.Exec(`
+			DELETE FROM
+				phones
+			WHERE
+				contact_id = $1 and fax = $2
+		`, contact.ID, fax)
 		if err != nil {
 			log.Println("CleanContactPhones e.db.Exec ", err)
 			return err
 		}
 	} else {
-		rows, err := e.db.Query(`SELECT id, phone FROM phones WHERE contact_id = $1 and fax = $2`, contact.ID, fax)
+		rows, err := e.db.Query(`
+			SELECT
+				id,
+				phone
+			FROM
+				phones
+			WHERE
+				contact_id = $1 and fax = $2
+		`, contact.ID, fax)
 		if err != nil {
 			log.Println("CleanContactPhones e.db.Query ", err)
 			return err
 		}
-		contactPhones, err := scanPhones(rows, "short")
+		contactPhones, err := scanPhonesSelect(rows)
 		if err != nil {
 			log.Println("CleanContactPhones scanPhones ", err)
 			return err
 		}
 		for _, value := range contactPhones {
 			if int64InSlice(value.Phone, phones) == false {
-				_, err = e.db.Exec(`DELETE FROM phones WHERE contact_id = $1 and phone = $2 and fax = $3`, contact.ID, value.Phone, fax)
+				_, err = e.db.Exec(`
+					DELETE FROM
+						phones
+					WHERE
+						contact_id = $1 and phone = $2 and fax = $3
+				`, contact.ID, value.Phone, fax)
 				if err != nil {
 					log.Println("CleanContactPhones e.db.Exec ", err)
 					return err
@@ -320,7 +472,12 @@ func (e *Edb) DeleteAllCompanyPhones(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM phones WHERE company_id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			phones
+		WHERE
+			company_id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteAllCompanyPhones e.db.Exec ", id, err)
 	}
@@ -332,7 +489,12 @@ func (e *Edb) DeleteAllContactPhones(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM phones WHERE contact_id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			phones
+		WHERE
+			contact_id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeleteAllContactPhones e.db.Exec ", id, err)
 	}
@@ -340,7 +502,18 @@ func (e *Edb) DeleteAllContactPhones(id int64) error {
 }
 
 func (e *Edb) phoneCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS phones (id bigserial primary key, contact_id bigint, company_id bigint, phone bigint, fax bool NOT NULL DEFAULT false, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone)`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			phones (
+				id bigserial primary key,
+				contact_id bigint,
+				company_id bigint,
+				phone bigint,
+				fax bool NOT NULL DEFAULT false,
+				created_at TIMESTAMP without time zone,
+				updated_at TIMESTAMP without time zone
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("phoneCreateTable e.db.Exec ", err)

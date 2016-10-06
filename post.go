@@ -128,14 +128,33 @@ func (e *Edb) GetPost(id int64) (Post, error) {
 	if id == 0 {
 		return Post{}, nil
 	}
-	row := e.db.QueryRow(`SELECT id, name, go, note FROM posts WHERE id = $1`, id)
+	row := e.db.QueryRow(`
+		SELECT
+			id,
+			name,
+			go,
+			note
+		FROM
+			posts
+		WHERE
+			id = $1
+	`, id)
 	post, err := scanPost(row)
 	return post, err
 }
 
 // GetPostList - get all post for list
 func (e *Edb) GetPostList() ([]PostList, error) {
-	rows, err := e.db.Query(`SELECT id, name, go, note FROM posts ORDER BY name ASC`)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			name,
+			go,
+			note
+		FROM
+			posts
+		ORDER BY
+			name ASC`)
 	if err != nil {
 		log.Println("GetPostList e.db.Query ", err)
 		return []PostList{}, err
@@ -146,7 +165,17 @@ func (e *Edb) GetPostList() ([]PostList, error) {
 
 // GetPostSelect - get all post for select
 func (e *Edb) GetPostSelect(g bool) ([]SelectItem, error) {
-	rows, err := e.db.Query(`SELECT id, name FROM posts WHERE go=$1 ORDER BY name ASC`, g)
+	rows, err := e.db.Query(`
+		SELECT
+			id,
+			name
+		FROM
+			posts
+		WHERE
+			go = $1
+		ORDER BY
+			name ASC
+	`, g)
 	if err != nil {
 		log.Println("GetPostSelect e.db.Query ", err)
 		return []SelectItem{}, err
@@ -157,7 +186,22 @@ func (e *Edb) GetPostSelect(g bool) ([]SelectItem, error) {
 
 // CreatePost - create new post
 func (e *Edb) CreatePost(post Post) (int64, error) {
-	stmt, err := e.db.Prepare(`INSERT INTO posts(name, go, note, created_at) VALUES($1, $2, $3, now()) RETURNING id`)
+	stmt, err := e.db.Prepare(`
+		INSERT INTO
+			posts (
+				name,
+				go,
+				note,
+				created_at
+			) VALUES (
+				$1,
+				$2,
+				$3,
+				now()
+			)
+		RETURNING
+			id
+	`)
 	if err != nil {
 		log.Println("CreatePost e.db.Prepare ", err)
 		return 0, err
@@ -171,7 +215,16 @@ func (e *Edb) CreatePost(post Post) (int64, error) {
 
 // UpdatePost - save post changes
 func (e *Edb) UpdatePost(s Post) error {
-	stmt, err := e.db.Prepare(`UPDATE posts SET name=$2, note=$3, updated_at = now() WHERE id = $1`)
+	stmt, err := e.db.Prepare(`
+		UPDATE
+			posts
+		SET
+			name = $2,
+			note = $3,
+			updated_at = now()
+		WHERE
+			id = $1
+	`)
 	if err != nil {
 		log.Println("UpdatePost e.db.Prepare ", err)
 		return err
@@ -188,7 +241,12 @@ func (e *Edb) DeletePost(id int64) error {
 	if id == 0 {
 		return nil
 	}
-	_, err := e.db.Exec(`DELETE FROM posts WHERE id = $1`, id)
+	_, err := e.db.Exec(`
+		DELETE FROM
+			posts
+		WHERE
+			id = $1
+	`, id)
 	if err != nil {
 		log.Println("DeletePost e.db.Exec ", id, err)
 	}
@@ -196,7 +254,18 @@ func (e *Edb) DeletePost(id int64) error {
 }
 
 func (e *Edb) postCreateTable() error {
-	str := `CREATE TABLE IF NOT EXISTS posts (id BIGSERIAL PRIMARY KEY, name TEXT, go BOOL NOT NULL DEFAULT FALSE, note TEXT, created_at TIMESTAMP without time zone, updated_at TIMESTAMP without time zone, UNIQUE (name, go))`
+	str := `
+		CREATE TABLE IF NOT EXISTS
+			posts (
+				id BIGSERIAL PRIMARY KEY,
+				name TEXT,
+				go BOOL NOT NULL DEFAULT FALSE,
+				note TEXT,
+				created_at TIMESTAMP without time zone,
+				updated_at TIMESTAMP without time zone,
+				UNIQUE (name, go)
+			)
+	`
 	_, err := e.db.Exec(str)
 	if err != nil {
 		log.Println("postCreateTable e.db.Exec ", err)

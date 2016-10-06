@@ -32,7 +32,7 @@ func scanDepartment(row *sql.Row) (Department, error) {
 	return department, nil
 }
 
-func scanDepartments(rows *sql.Rows) ([]Department, error) {
+func scanDepartmentsList(rows *sql.Rows) ([]Department, error) {
 	var departments []Department
 	for rows.Next() {
 		var (
@@ -118,7 +118,7 @@ func (e *Edb) GetDepartmentList() ([]Department, error) {
 		log.Println("GetDepartmentList e.db.Query ", err)
 		return []Department{}, err
 	}
-	departments, err := scanDepartments(rows)
+	departments, err := scanDepartmentsList(rows)
 	return departments, err
 }
 
@@ -218,7 +218,8 @@ func (e *Edb) departmentCreateTable() error {
 				name text,
 				note text,
 				created_at TIMESTAMP without time zone,
-				updated_at TIMESTAMP without time zone
+				updated_at TIMESTAMP without time zone,
+				UNIQUE(name)
 			)
 	`
 	_, err := e.db.Exec(str)
