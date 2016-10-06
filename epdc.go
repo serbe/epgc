@@ -80,5 +80,17 @@ func (e *Edb) createAllTables() error {
 	if err != nil {
 		return err
 	}
+	err = e.departmentCreateTable()
+	if err != nil {
+		return err
+	}
+	err = e.sirenTypeCreateTable()
+	if err != nil {
+		return err
+	}
+	err = e.sirenCreateTable()
+	if err != nil {
+		return err
+	}
 	return nil
 }
